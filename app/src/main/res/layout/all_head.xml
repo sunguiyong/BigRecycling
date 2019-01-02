@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    >
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/dp_70"
+    android:orientation="horizontal"
+    android:background="#00A8F1"
+
+    >
+<LinearLayout
+    android:layout_width="0dp"
+    android:layout_weight="1"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:layout_marginLeft="@dimen/dp_23"
+    >
+  <LinearLayout
+      android:layout_width="wrap_content"
+      android:layout_height="match_parent"
+      android:orientation="vertical"
+      android:gravity="center"
+      >
+   <TextView
+       android:layout_width="wrap_content"
+       android:layout_height="wrap_content"
+       android:text="上海市曹杨路868号"
+       android:textSize="@dimen/text_17"
+       android:textColor="@color/with"
+       />
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="left"
+        android:background="#B2E5FB"
+        android:layout_marginTop="@dimen/dp_8"
+        >
+      <TextView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="HY88999123"
+          android:textSize="@dimen/text_15"
+          android:textColor="@color/with"
+          />
+    </LinearLayout>
+  </LinearLayout>
+</LinearLayout>
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        >
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_marginLeft="@dimen/dp_70"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:gravity="center"
+
+        >
+
+     <ImageView
+         android:layout_width="@dimen/dp_23"
+         android:layout_height="@dimen/dp_23"
+         android:src="@mipmap/phone"
+         />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="021-39178857"
+            android:layout_marginLeft="@dimen/dp_8"
+            android:textSize="@dimen/text_15"
+            android:textColor="@color/with"
+            />
+    </LinearLayout>
+     <LinearLayout
+         android:layout_width="match_parent"
+         android:layout_height="0dp"
+         android:layout_weight="1"
+         android:layout_marginLeft="@dimen/dp_70"
+         android:gravity="center"
+         >
+    <TextView
+        android:id="@+id/version"
+        android:textColor="#ffffff"
+        android:layout_gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="版本"
+        />
+     </LinearLayout>
+    </LinearLayout>
+</LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="#000000"
+        />
+</LinearLayout>
