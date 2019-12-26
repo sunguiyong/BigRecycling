@@ -14,12 +14,13 @@ import rx.functions.Action0;
 import rx.schedulers.Schedulers;
 
 
-
 public class RxHelper<T> {
     private String mMessage;
-    public RxHelper(String message){
+
+    public RxHelper(String message) {
         mMessage = message;
     }
+
     //子线程运行，主线程回调
     public Observable.Transformer<T, T> io_main(final RxAppCompatActivity context) {
         return new Observable.Transformer<T, T>() {
@@ -40,6 +41,7 @@ public class RxHelper<T> {
             }
         };
     }
+
     public Observable.Transformer<T, T> io_no_main(final RxAppCompatActivity context) {
         return new Observable.Transformer<T, T>() {
             @Override
@@ -59,6 +61,7 @@ public class RxHelper<T> {
             }
         };
     }
+
     public Observable.Transformer<T, T> io_fragment_main(final BaseFragment context) {
         return new Observable.Transformer<T, T>() {
             @Override
@@ -76,7 +79,9 @@ public class RxHelper<T> {
                         .compose(RxLifecycle.bindUntilEvent(context.lifecycle(), FragmentEvent.DESTROY));
                 return observable;
             }
-        };}
+        };
+    }
+
     public Observable.Transformer<T, T> io_toay_main() {
         return new Observable.Transformer<T, T>() {
             @Override

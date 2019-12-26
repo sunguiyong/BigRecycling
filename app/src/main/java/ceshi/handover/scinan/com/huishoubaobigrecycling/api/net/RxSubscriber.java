@@ -1,22 +1,9 @@
 package ceshi.handover.scinan.com.huishoubaobigrecycling.api.net;
 
-
-
-
-
-
-
-
-
-
-
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.DialogHelper;
 import rx.Subscriber;
 
-
-
 public abstract class RxSubscriber<T> extends Subscriber<T> {
-
     @Override
     public void onCompleted() {
         DialogHelper.stopProgressDlg();

@@ -1,14 +1,6 @@
 package ceshi.handover.scinan.com.huishoubaobigrecycling.api;
 
 
-
-
-
-
-
-
-
-
 import java.util.Map;
 
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.BaseResult;
@@ -16,6 +8,7 @@ import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.DeviceState_Info;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.Erweima;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.Face_Info;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.LunBo_Info;
+import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.Lunbo;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.Version_Info;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.request_result;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.request_result_info;
@@ -34,42 +27,65 @@ import retrofit2.http.Url;
 import rx.Observable;
 
 
-
 /**
  * Retrofit 2.0中我们还可以在@Url里面定义完整的URL：这种情况下Base URL会被忽略。
  */
 public interface APIService {
- @GET("member/get")
- Observable <BaseResult> getUserInfo(@Header("Authorization") String Authorization);
-   @GET("sowing/list")
-    Observable <LunBo_Info> getOneLunBo(@Query("type") String type);
+
+    /**
+     * getLogin()
+     *
+     * @return
+     */
+    @POST("api/user/phoneLogin")
+    Observable<BaseResult> getLogin();
+
+    @GET("member/get")
+    Observable<BaseResult> getUserInfo(@Header("Authorization") String Authorization);
+
+    @FormUrlEncoded
+    @POST("api/ad/getAdList")
+    Observable<Lunbo> getOneLunBo(@Field("token") String token,
+                                  @Field("groupId") String groupId,
+                                  @Field("type") String type,
+                                  @Field("positions") String positions);
+
     @GET("index/get_scan")
-    Observable <Erweima> getErweima();
+    Observable<Erweima> getErweima();
+
     @GET("recovery/get_init")
-    Observable <BaseResult> getInitializ(@Header("Authorization") String Authorization,@Query("identity") String identity);
+    Observable<BaseResult> getInitializ(@Header("Authorization") String Authorization, @Query("identity") String identity);
+
     @GET("recovery/get_status")
-    Observable <DeviceState_Info> getDeviceState(@Header("Authorization") String Authorization,@Query("identity") String identity);
+    Observable<DeviceState_Info> getDeviceState(@Header("Authorization") String Authorization, @Query("identity") String identity);
+
     @FormUrlEncoded
     @POST("recovery/edit_open")
-    Observable <BaseResult> getOPenBarn(@Header("Authorization") String Authorization,@Field("alias") String alias, @Field("identity")String identity);
+    Observable<BaseResult> getOPenBarn(@Header("Authorization") String Authorization, @Field("alias") String alias, @Field("identity") String identity);
+
     //index/login_face
     @Multipart
     @POST
-    Observable <BaseResult> getFace(@Url String url, @PartMap Map<String, RequestBody> files);
-   @Headers({"Content-Type: application/json;charset=UTF-8"})
+    Observable<BaseResult> getFace(@Url String url, @PartMap Map<String, RequestBody> files);
+
+    @Headers({"Content-Type: application/json;charset=UTF-8"})
     @POST("recovery/edit_settle")
-    Observable <request_result_info> getRequest(@Header("Authorization") String Authorization,@Body request_result result);
-   @FormUrlEncoded
-   @POST("recovery/edit_finish")
-   Observable <BaseResult> getJieSu(@Header("Authorization") String Authorization, @Field("identity")String identity);
-   @GET("appversion/get")
-   Observable <Version_Info> getDeviceVersion(@Query("type") String type);
+    Observable<request_result_info> getRequest(@Header("Authorization") String Authorization, @Body request_result result);
+
+    @FormUrlEncoded
+    @POST("recovery/edit_finish")
+    Observable<BaseResult> getJieSu(@Header("Authorization") String Authorization, @Field("identity") String identity);
+
+    @GET("appversion/get")
+    Observable<Version_Info> getDeviceVersion(@Query("type") String type);
+
     @FormUrlEncoded
     @POST("recovery/edit_close")
-    Observable <BaseResult> getClose(@Header("Authorization") String Authorization, @Field("identity")String identity);
+    Observable<BaseResult> getClose(@Header("Authorization") String Authorization, @Field("identity") String identity);
+
     @FormUrlEncoded
     @POST("sync/edit_page")
-    Observable <BaseResult> getSync(@Header("Authorization") String Authorization, @Field("page")String page);
+    Observable<BaseResult> getSync(@Header("Authorization") String Authorization, @Field("page") String page);
 
 
     /*  @FormUrlEncoded

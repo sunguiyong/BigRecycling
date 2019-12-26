@@ -82,8 +82,8 @@ public class BalanceActivity extends BaseActivity {
     @BindView(R.id.jixu_toufang)
     Button jixuToufang;
     private TimeCount timecount;
-    List<request_result.ItemsBean> list=new ArrayList<>();
-    List<request_result_info.MessageBean.PricesBean> list_message=new ArrayList<>();
+    List<request_result.ItemsBean> list = new ArrayList<>();
+    List<request_result_info.MessageBean.PricesBean> list_message = new ArrayList<>();
     private AreaAdapter adapter;
     double sum_total;
     private String token;
@@ -96,6 +96,7 @@ public class BalanceActivity extends BaseActivity {
     public int layoutView() {
         return R.layout.activity_balance;
     }
+
     @Override
     public void initview(Bundle savedInstanceState) {
         super.initview(savedInstanceState);
@@ -111,47 +112,47 @@ public class BalanceActivity extends BaseActivity {
         filter1.addAction(ACTION_BACK);
         backReceiver = new BackBroadcastReceiver();
         registerReceiver(backReceiver, filter1);
-        if (BOTTLE != null&&PAPER==null&&ELECTRON==null) {
-          xiaoYinliao.setVisibility(View.VISIBLE);
-          request_result.ItemsBean requestResult=new request_result.ItemsBean("BOTTLE",pingzi_number);
-          list.add(requestResult);
-        }else if (PAPER!=null&&BOTTLE == null&&ELECTRON==null){
-            xiaoFeizhi.setVisibility(View.VISIBLE);
-            request_result.ItemsBean requestResult=new request_result.ItemsBean("PAPER",feizhi_number);
+        if (BOTTLE != null && PAPER == null && ELECTRON == null) {
+            xiaoYinliao.setVisibility(View.VISIBLE);
+            request_result.ItemsBean requestResult = new request_result.ItemsBean("BOTTLE", pingzi_number);
             list.add(requestResult);
-        }else if (PAPER!=null&&BOTTLE != null&&ELECTRON==null){
-            request_result.ItemsBean requestResult1=new request_result.ItemsBean("BOTTLE",pingzi_number);
+        } else if (PAPER != null && BOTTLE == null && ELECTRON == null) {
+            xiaoFeizhi.setVisibility(View.VISIBLE);
+            request_result.ItemsBean requestResult = new request_result.ItemsBean("PAPER", feizhi_number);
+            list.add(requestResult);
+        } else if (PAPER != null && BOTTLE != null && ELECTRON == null) {
+            request_result.ItemsBean requestResult1 = new request_result.ItemsBean("BOTTLE", pingzi_number);
             xiaoFeizhi.setVisibility(View.VISIBLE);
             xiaoYinliao.setVisibility(View.VISIBLE);
-            request_result.ItemsBean requestResult=new request_result.ItemsBean("PAPER",feizhi_number);
+            request_result.ItemsBean requestResult = new request_result.ItemsBean("PAPER", feizhi_number);
             list.add(requestResult);
             list.add(requestResult1);
-        }else if (PAPER==null&&BOTTLE == null&&ELECTRON!=null){
-            request_result.ItemsBean requestResult3=new request_result.ItemsBean("ELECTRON","0");
+        } else if (PAPER == null && BOTTLE == null && ELECTRON != null) {
+            request_result.ItemsBean requestResult3 = new request_result.ItemsBean("ELECTRON", "0");
             list.add(requestResult3);
-        }else if (PAPER==null&&BOTTLE != null&&ELECTRON!=null){
-            request_result.ItemsBean requestResult3=new request_result.ItemsBean("ELECTRON","0");
+        } else if (PAPER == null && BOTTLE != null && ELECTRON != null) {
+            request_result.ItemsBean requestResult3 = new request_result.ItemsBean("ELECTRON", "0");
             list.add(requestResult3);
-            request_result.ItemsBean requestResult1=new request_result.ItemsBean("BOTTLE",pingzi_number);
+            request_result.ItemsBean requestResult1 = new request_result.ItemsBean("BOTTLE", pingzi_number);
             xiaoYinliao.setVisibility(View.VISIBLE);
             list.add(requestResult1);
-        }else if (PAPER!=null&&BOTTLE == null&&ELECTRON!=null){
-            request_result.ItemsBean requestResult3=new request_result.ItemsBean("ELECTRON","0");
+        } else if (PAPER != null && BOTTLE == null && ELECTRON != null) {
+            request_result.ItemsBean requestResult3 = new request_result.ItemsBean("ELECTRON", "0");
             list.add(requestResult3);
             xiaoYinliao.setVisibility(View.VISIBLE);
-            request_result.ItemsBean requestResult=new request_result.ItemsBean("PAPER",feizhi_number);
+            request_result.ItemsBean requestResult = new request_result.ItemsBean("PAPER", feizhi_number);
             list.add(requestResult);
-        }else if (PAPER!=null&&BOTTLE != null&&ELECTRON!=null){
-            request_result.ItemsBean requestResult3=new request_result.ItemsBean("ELECTRON","0");
+        } else if (PAPER != null && BOTTLE != null && ELECTRON != null) {
+            request_result.ItemsBean requestResult3 = new request_result.ItemsBean("ELECTRON", "0");
             list.add(requestResult3);
             xiaoYinliao.setVisibility(View.VISIBLE);
-            request_result.ItemsBean requestResult=new request_result.ItemsBean("PAPER",feizhi_number);
-            request_result.ItemsBean requestResult1=new request_result.ItemsBean("BOTTLE",pingzi_number);
+            request_result.ItemsBean requestResult = new request_result.ItemsBean("PAPER", feizhi_number);
+            request_result.ItemsBean requestResult1 = new request_result.ItemsBean("BOTTLE", pingzi_number);
             xiaoYinliao.setVisibility(View.VISIBLE);
             list.add(requestResult);
             list.add(requestResult1);
         }
-        onSubscribe =Observable.interval(0, 3, TimeUnit.SECONDS)
+        onSubscribe = Observable.interval(0, 3, TimeUnit.SECONDS)
                 .subscribeOn(Schedulers.io())
                 .compose(this.<Long>bindUntilEvent(ActivityEvent.STOP))   //当Activity执行Onstop()方法是解除订阅关系
                 .observeOn(AndroidSchedulers.mainThread())
@@ -161,47 +162,49 @@ public class BalanceActivity extends BaseActivity {
                         DeviceStates_Net(Constant.MAC);
                     }
                 });
-        request_result requestResult=new request_result(Constant.MAC,list);
-        APIWrapper.getInstance().querRequest("Bearer "+token,requestResult)
+        request_result requestResult = new request_result(Constant.MAC, list);
+        APIWrapper.getInstance().querRequest("Bearer " + token, requestResult)
                 .compose(new RxHelper<request_result_info>("正在加载，请稍候").io_no_main(BalanceActivity.this))
                 .subscribe(new RxSubscriber<request_result_info>() {
                     @Override
                     public void _onNext(request_result_info response) {
                         int status = response.getStatus();
                         if (status == 200) {
-                                List<request_result_info.MessageBean.PricesBean> message=response.getMessage().getPrices();
-                                for (int i=0;i<message.size();i++){
-                                    request_result_info.MessageBean.PricesBean pricesBean=new request_result_info.MessageBean.PricesBean();
-                                    String name=message.get(i).getName();
-                                    pricesBean.setName(name);
-                                    double total=message.get(i).getTotal();
-                                    sum_total+=total;
-                                    pricesBean.setTotal(total);
-                                    double count=message.get(i).getCount();
-                                    pricesBean.setCount(count);
-                                    double unit_price=message.get(i).getUnit_price();
-                                    pricesBean.setUnit_price(unit_price);
-                                    list_message.add(pricesBean);
-                                }
-                             int points=response.getMessage().getPoints();
+                            List<request_result_info.MessageBean.PricesBean> message = response.getMessage().getPrices();
+                            for (int i = 0; i < message.size(); i++) {
+                                request_result_info.MessageBean.PricesBean pricesBean = new request_result_info.MessageBean.PricesBean();
+                                String name = message.get(i).getName();
+                                pricesBean.setName(name);
+                                double total = message.get(i).getTotal();
+                                sum_total += total;
+                                pricesBean.setTotal(total);
+                                double count = message.get(i).getCount();
+                                pricesBean.setCount(count);
+                                double unit_price = message.get(i).getUnit_price();
+                                pricesBean.setUnit_price(unit_price);
+                                list_message.add(pricesBean);
+                            }
+                            int points = response.getMessage().getPoints();
                             adapter = new AreaAdapter(list_message);
                             // recycler.addItemDecoration(new ListViewDecoration());
                             LinearLayoutManager linearLayoutManager = new LinearLayoutManager(UiUtils.getContext(), LinearLayoutManager.VERTICAL, false);
                             recycle.setLayoutManager(linearLayoutManager);
                             recycle.setAdapter(adapter);
-                            hejiMoney.setText(sum_total+"元");
-                            jiefen.setText(points+"积分");
+                            hejiMoney.setText(sum_total + "元");
+                            jiefen.setText(points + "积分");
                             adapter.notifyDataSetChanged();
                         } else if (status == 300) {
                             ToastUtil.showShort(response.getMessage() + "");
                         }
                     }
+
                     @Override
                     public void _onError(String msg) {
                         TLog.log(msg + "");
                     }
                 });
     }
+
     public class BackBroadcastReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -213,8 +216,9 @@ public class BalanceActivity extends BaseActivity {
         }
 
     }
-    public void Info(){
-        APIWrapper.getInstance().querUserInfo("Bearer "+token)
+
+    public void Info() {
+        APIWrapper.getInstance().querUserInfo("Bearer " + token)
                 .compose(new RxHelper<BaseResult>("正在加载，请稍候").io_main(BalanceActivity.this))
                 .subscribe(new RxSubscriber<BaseResult>() {
                     @Override
@@ -222,29 +226,32 @@ public class BalanceActivity extends BaseActivity {
                         int status = response.getStatus();
                         TLog.log(status + "");
                         if (status == 200) {
-                            Object message=response.getMessage();
-                            TLog.log(message+"");
-                            if (message!=null){
-                                Gson gson=new Gson();
-                                User_info1 user_info=gson.fromJson(gson.toJson(message),User_info1.class);
-                                String mobile=user_info.getMobile();
+                            Object message = response.getMessage();
+                            TLog.log(message + "");
+                            if (message != null) {
+                                Gson gson = new Gson();
+                                User_info1 user_info = gson.fromJson(gson.toJson(message), User_info1.class);
+                                String mobile = user_info.getMobile();
                                 JPushInterface.setAlias(BalanceActivity.this, 1, mobile);
                                 String nick = user_info.getNick();
                                 username.setText(nick);
-                                int achieve=user_info.getAchieve();
-                                jifen1.setText(achieve+"");
+                                int achieve = user_info.getAchieve();
+                                jifen1.setText(achieve + "");
                             }
                         } else if (status == 300) {
-                            ToastUtil.showShort( response.getMessage() + "");
+                            ToastUtil.showShort(response.getMessage() + "");
                         }
                     }
+
                     @Override
                     public void _onError(String msg) {
                         TLog.log(msg + "");
                     }
-                });    }
-    public void Sync_net(){
-        APIWrapper.getInstance().querSync("Bearer "+token,"Back_TO")
+                });
+    }
+
+    public void Sync_net() {
+        APIWrapper.getInstance().querSync("Bearer " + token, "Back_TO")
                 .compose(new RxHelper<BaseResult>("正在加载，请稍候").io_main(BalanceActivity.this))
                 .subscribe(new RxSubscriber<BaseResult>() {
                     @Override
@@ -258,46 +265,51 @@ public class BalanceActivity extends BaseActivity {
                             startActivity(intent1);
                             finish();
                         } else if (status == 300) {
-                            ToastUtil.showShort( response.getMessage() + "");
+                            ToastUtil.showShort(response.getMessage() + "");
                         }
                     }
+
                     @Override
                     public void _onError(String msg) {
                         TLog.log(msg + "");
                     }
                 });
     }
+
     private void DeviceStates_Net(String mac) {
-        APIWrapper.getInstance().querDeviceState("Bearer "+token,mac)
+        APIWrapper.getInstance().querDeviceState("Bearer " + token, mac)
                 .compose(new RxHelper<DeviceState_Info>("正在加载，请稍候").io_no_main(BalanceActivity.this))
                 .subscribe(new RxSubscriber<DeviceState_Info>() {
                     @Override
                     public void _onNext(DeviceState_Info response) {
                         int status = response.getStatus();
                         if (status == 200) {
-                           String page=response.getMessage().getPage();
-                           if (page!=null){
-                           if ("RECOVERY".equals(page)){
-                               onSubscribe.unsubscribe();
-                            Intent intent=new Intent(BalanceActivity.this,RecoverActivity.class);
-                            intent.putExtra("RECOVERY","RECOVERY");
-                            startActivity(intent);
-                            finish();
-                           }}
+                            String page = response.getMessage().getPage();
+                            if (page != null) {
+                                if ("RECOVERY".equals(page)) {
+                                    onSubscribe.unsubscribe();
+                                    Intent intent = new Intent(BalanceActivity.this, RecoverActivity.class);
+                                    intent.putExtra("RECOVERY", "RECOVERY");
+                                    startActivity(intent);
+                                    finish();
+                                }
+                            }
                         } else if (status == 300) {
                             ToastUtil.showShort(response.getMessage() + "");
                         }
                     }
+
                     @Override
                     public void _onError(String msg) {
                         TLog.log(msg + "");
                     }
                 });
     }
+
     @Override
     public void initData() {
         super.initData();
-        new Thread(){
+        new Thread() {
             @Override
             public void run() {
                 super.run();
@@ -305,6 +317,7 @@ public class BalanceActivity extends BaseActivity {
             }
         }.start();
     }
+
     private void startmusicopen() {
         try {
             start_mediaPlayer = new MediaPlayer().create(BalanceActivity.this, R.raw.ganxienishiyong);
@@ -323,12 +336,13 @@ public class BalanceActivity extends BaseActivity {
             start_mediaPlayer = null;
         }
     }
+
     @OnClick({R.id.jiesu_toufang, R.id.jixu_toufang})
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.jiesu_toufang:
                 startmusicopen();
-                APIWrapper.getInstance().querJieSu("Bearer "+token,Constant.MAC)
+                APIWrapper.getInstance().querJieSu("Bearer " + token, Constant.MAC)
                         .compose(new RxHelper<BaseResult>("正在加载，请稍候").io_no_main(BalanceActivity.this))
                         .subscribe(new RxSubscriber<BaseResult>() {
                             @Override
@@ -340,6 +354,7 @@ public class BalanceActivity extends BaseActivity {
                                     ToastUtil.showShort(response.getMessage() + "");
                                 }
                             }
+
                             @Override
                             public void _onError(String msg) {
                                 TLog.log(msg + "");
@@ -347,7 +362,7 @@ public class BalanceActivity extends BaseActivity {
                         });
                 break;
             case R.id.jixu_toufang:
-                Intent intent_toufang=new Intent(BalanceActivity.this,RecoverActivity.class);
+                Intent intent_toufang = new Intent(BalanceActivity.this, RecoverActivity.class);
                 timecount.cancel();
                 onSubscribe.unsubscribe();
                 startActivity(intent_toufang);
@@ -355,21 +370,24 @@ public class BalanceActivity extends BaseActivity {
                 break;
         }
     }
+
     class TimeCount extends CountDownTimer {
         public TimeCount(long millisInFuture, long countDownInterval) {
             super(millisInFuture, countDownInterval);
         }
+
         @Override
         public void onTick(long millisUntilFinished) {
-            if (time1!=null) {
+            if (time1 != null) {
                 time1.setClickable(false);
                 time1.setText((millisUntilFinished / 1000) + "s");
                 time1.setTextColor(Color.parseColor("#ffffff"));
             }
         }
+
         @Override
         public void onFinish() {
-            Intent intent=new Intent(BalanceActivity.this,MainActivity.class);
+            Intent intent = new Intent(BalanceActivity.this, MainActivity.class);
             onSubscribe.unsubscribe();
             timecount.cancel();
             startActivity(intent);

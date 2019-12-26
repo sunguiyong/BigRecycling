@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".activity.TestFunctionActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <include layout="@layout/all_head" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/result_tv"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:gravity="center" />
+
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingTop="50dp">
+
+        <TableRow>
+
+            <Button
+                android:id="@+id/suliaoopen"
+                android:text="塑料投递门开" />
+
+            <Button
+                android:id="@+id/suliaoclose"
+                android:text="塑料投递门关" />
+
+            <Button
+                android:id="@+id/suliaohuishou"
+                android:text="回收门" />
+
+            <Button
+                android:id="@+id/suliaozhongliang"
+                android:text="电子秤" />
+
+            <Button
+                android:id="@+id/suliaodistance"
+                android:text="激光测距" />
+
+            <Button
+                android:id="@+id/suliaowenshidu"
+                android:text="温湿度" />
+
+        </TableRow>
+
+        <TableRow>
+
+            <Button
+                android:id="@+id/boliopen"
+                android:text="玻璃投递门开" />
+
+            <Button
+                android:id="@+id/boliclose"
+                android:text="玻璃投递门关" />
+
+            <Button
+                android:id="@+id/bolihuishou"
+                android:text="回收门" />
+
+            <Button
+                android:id="@+id/bolizhongliang"
+                android:text="电子秤" />
+
+            <Button
+                android:id="@+id/bolidistance"
+                android:text="激光测距" />
+
+            <Button
+                android:id="@+id/boliwenshidu"
+                android:text="温湿度" />
+
+        </TableRow>
+
+        <TableRow>
+
+            <Button
+                android:id="@+id/ylopen"
+                android:text="饮料投递门开" />
+
+            <Button
+                android:id="@+id/ylclose"
+                android:text="饮料投递门关" />
+
+            <Button
+                android:id="@+id/ylhuishou"
+                android:text="回收门" />
+
+            <Button
+                android:id="@+id/ylzhongliang"
+                android:text="电子秤"
+                android:visibility="invisible" />
+
+            <Button
+                android:id="@+id/yldistance"
+                android:text="激光测距" />
+
+            <Button
+                android:id="@+id/ylwenshidu"
+                android:text="温湿度" />
+
+        </TableRow>
+
+        <TableRow>
+
+            <Button
+                android:id="@+id/zopen"
+                android:text="废纸投递门开" />
+
+            <Button
+                android:id="@+id/zclose"
+                android:text="废纸投递门关" />
+
+            <Button
+                android:id="@+id/zhuishou"
+                android:text="回收门" />
+
+            <Button
+                android:id="@+id/zzhongliang"
+                android:text="电子秤" />
+
+            <Button
+                android:id="@+id/zdistance"
+                android:text="激光测距" />
+
+            <Button
+                android:id="@+id/zwenshidu"
+                android:text="温湿度" />
+
+        </TableRow>
+
+        <TableRow>
+
+            <Button
+                android:id="@+id/ywopen"
+                android:text="织物投递门开" />
+
+            <Button
+                android:id="@+id/ywclose"
+                android:text="织物投递门关" />
+
+            <Button
+                android:id="@+id/ywhuishou"
+                android:text="回收门" />
+
+            <Button
+                android:id="@+id/ywzhongliang"
+                android:text="电子秤" />
+
+            <Button
+                android:id="@+id/ywdistance"
+                android:text="激光测距" />
+
+            <Button
+                android:id="@+id/ywwenshidu"
+                android:text="温湿度" />
+
+        </TableRow>
+
+        <TableRow>
+
+            <Button
+                android:id="@+id/reset"
+                android:text="复位" />
+
+            <Button
+                android:id="@+id/systemrestart"
+                android:text="系统重启" />
+
+            <Button
+                android:id="@+id/apprestart"
+                android:text="APP重启" />
+
+            <Button
+                android:id="@+id/ggopen"
+                android:text="广告灯开" />
+
+            <Button
+                android:id="@+id/ggclose"
+                android:text="广告灯关" />
+
+            <Button
+                android:id="@+id/neidengopen"
+                android:text="内灯开" />
+
+            <Button
+                android:id="@+id/neidengclose"
+                android:text="内灯关" />
+        </TableRow>
+    </TableLayout>
+</LinearLayout>

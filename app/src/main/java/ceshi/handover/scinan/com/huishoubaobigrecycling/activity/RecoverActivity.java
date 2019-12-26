@@ -11,24 +11,38 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Message;
+import android.os.SystemClock;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TableLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
 import com.google.gson.Gson;
+import com.leesche.yyyiotlib.entity.CmdResultEntity;
 import com.trello.rxlifecycle.ActivityEvent;
 
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.lang.ref.WeakReference;
 import java.net.Socket;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
@@ -41,9 +55,18 @@ import ceshi.handover.scinan.com.huishoubaobigrecycling.api.net.RxSubscriber;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.base.BaseActivity;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.BaseResult;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.DeviceState_Info;
+import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.ResultBean;
+import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.UnitPrice;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.User_info1;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.pingzi_info;
+import ceshi.handover.scinan.com.huishoubaobigrecycling.control.ControlManagerImplMy;
+import ceshi.handover.scinan.com.huishoubaobigrecycling.entity.SaveData;
+import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.Arith;
+import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.BaseApplication;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.Constant;
+import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.DialogHelper;
+import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.FileUtil;
+import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.FileUtils;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.PakageUtil;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.SharePreferenceUtils;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.TLog;
@@ -56,15 +79,21 @@ import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
+
+/**
+ * 瓶 塑 玻 纸 纺
+ * 用户投递页面
+ */
 public class RecoverActivity extends BaseActivity {
+    int x = R.layout.activity_recover;
     @BindView(R.id.username)
     TextView username;
-    @BindView(R.id.jifen1)
-    TextView jifen1;
+    //投放结束按钮
+    @BindView(R.id.end_bt)
+    Button endBt;
     @BindView(R.id.time)
     TextView time;
-    @BindView(R.id.img_jinshu)
-    ImageView imgJinshu;
+
     @BindView(R.id.img_feizhi)
     ImageView imgFeizhi;
     @BindView(R.id.img_boli)
@@ -73,8 +102,10 @@ public class RecoverActivity extends BaseActivity {
     ImageView imgYinliao;
     @BindView(R.id.img_yifu)
     ImageView imgYifu;
-    @BindView(R.id.img_dianzi)
-    ImageView imgDianzi;
+    @BindView(R.id.sum_tv)
+    TextView sumTv;
+    @BindView(R.id.tablayout)
+    TableLayout tableLayout;
     @BindView(R.id.img_suliao)
     ImageView imgSuliao;
     @BindView(R.id.lin_number)
@@ -83,258 +114,14 @@ public class RecoverActivity extends BaseActivity {
     TextView tvTixing;
     @BindView(R.id.submit)
     Button submit;
-    boolean b_jinshu;
-    boolean b_feizhi;
-    boolean b_boli;
-    boolean b_yinliao;
-    boolean b_yifu;
-    boolean b_dianzi;
-    boolean b_suliao;
-    boolean state = false;
-    boolean state1 = false;
-    boolean state2 = false;
-    @BindView(R.id.xuanze_style)
-    TextView xuanzeStyle;
-    public final int handler_pingzi_open = 1;
-    public final int handler_pingzi_close = 2;
-    public final int handler_dianzi_open = 3;
-    public final int handler_dianzi_close = 4;
-    public final int handler_feizhi_open = 5;
-    public final int handler_feizhi_close = 6;
-    public final int handler_result_number = 7;
-    public final int handler_pingzi_number = 8;
-    String pingzi_close = "{\"message\":\"1234\",\"taskcount\":1 ,\"node\":[{\"deviceid\":2,\"nodetypeid\":58,\"ctl\":121,\"devicesite\":1,\"value\":\"1\"}]}";
-    String pingzi_open = "{\"message\":\"1234\",\"taskcount\":1 ,\"node\":[{\"deviceid\":2,\"nodetypeid\":57,\"ctl\":121,\"devicesite\":1,\"value\":\"1\"}]}";
-    String dianzi_open = "{\"message\":\"1234\",\"taskcount\":1 ,\"node\":[{\"deviceid\":3,\"nodetypeid\":57,\"ctl\":121,\"devicesite\":1,\"value\":\"1\"}]}";
-    String dianzi_close = "{\"message\":\"1234\",\"taskcount\":1 ,\"node\":[{\"deviceid\":3,\"nodetypeid\":58,\"ctl\":121,\"devicesite\":1,\"value\":\"1\"}]}";
-    String feizhi_open = "{\"message\":\"1234\",\"taskcount\":1 ,\"node\":[{\"deviceid\":1,\"nodetypeid\":57,\"ctl\":121,\"devicesite\":1,\"value\":\"1\"}]}";
-    String feizhi_close = "{\"message\":\"1234\",\"taskcount\":1 ,\"node\":[{\"deviceid\":1,\"nodetypeid\":58,\"ctl\":121,\"devicesite\":1,\"value\":\"1\"}]}";
-
-    @SuppressLint("HandlerLeak")
-    public Handler handler = new Handler() {
-        @SuppressWarnings("unused")
-        private WeakReference<RecoverActivity> mActivity;
-
-        @SuppressWarnings("unused")
-        public void mHandler(RecoverActivity activity) {
-            mActivity = new WeakReference<RecoverActivity>(activity);
-        }
-
-        @Override
-        public void handleMessage(final Message msg) {
-            super.handleMessage(msg);
-            switch (msg.what) {
-                case handler_pingzi_open:
-                    new Thread() {
-                        @Override
-                        public void run() {
-                            super.run();
-                            Socket socket = null;
-                            try {
-                                socket = new Socket(Constant.SOCKET_IP, Constant.SOCKET_PORT);
-                                socket.isConnected();
-                                OutputStream ops = socket.getOutputStream();
-                                OutputStreamWriter opsw = new OutputStreamWriter(ops);
-                                BufferedWriter bw = new BufferedWriter(opsw);
-                                bw.write(pingzi_open);
-                                bw.flush();
-                                socket.close();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }.start();
-                    break;
-                case handler_pingzi_close:
-                    new Thread() {
-                        @Override
-                        public void run() {
-                            super.run();
-                            Socket socket = null;
-                            try {
-                                socket = new Socket(Constant.SOCKET_IP, Constant.SOCKET_PORT);
-                                socket.isConnected();
-                                OutputStream ops = socket.getOutputStream();
-                                OutputStreamWriter opsw = new OutputStreamWriter(ops);
-                                BufferedWriter bw = new BufferedWriter(opsw);
-                                bw.write(pingzi_close);
-                                bw.flush();
-                                socket.close();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }.start();
-                    break;
-                case handler_dianzi_open:
-                    new Thread() {
-                        @Override
-                        public void run() {
-                            super.run();
-                            Socket socket = null;
-                            try {
-                                socket = new Socket(Constant.SOCKET_IP, Constant.SOCKET_PORT);
-                                socket.isConnected();
-                                OutputStream ops = socket.getOutputStream();
-                                OutputStreamWriter opsw = new OutputStreamWriter(ops);
-                                BufferedWriter bw = new BufferedWriter(opsw);
-                                bw.write(dianzi_open);
-                                bw.flush();
-                                socket.close();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }.start();
-                    break;
-                case handler_dianzi_close:
-                    new Thread() {
-                        @Override
-                        public void run() {
-                            super.run();
-                            Socket socket = null;
-                            try {
-                                socket = new Socket(Constant.SOCKET_IP, Constant.SOCKET_PORT);
-                                socket.isConnected();
-                                OutputStream ops = socket.getOutputStream();
-                                OutputStreamWriter opsw = new OutputStreamWriter(ops);
-                                BufferedWriter bw = new BufferedWriter(opsw);
-                                bw.write(dianzi_close);
-                                bw.flush();
-                                socket.close();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }.start();
-                    break;
-                case handler_feizhi_open:
-                    new Thread() {
-                        @Override
-                        public void run() {
-                            super.run();
-                            Socket socket = null;
-                            try {
-                                socket = new Socket(Constant.SOCKET_IP, Constant.SOCKET_PORT);
-                                socket.isConnected();
-                                OutputStream ops = socket.getOutputStream();
-                                OutputStreamWriter opsw = new OutputStreamWriter(ops);
-                                BufferedWriter bw = new BufferedWriter(opsw);
-                                bw.write(feizhi_open);
-                                bw.flush();
-                                socket.close();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }.start();
-                    break;
-                case handler_feizhi_close:
-                    new Thread() {
-                        @Override
-                        public void run() {
-                            super.run();
-                            Socket socket = null;
-                            try {
-                                socket = new Socket(Constant.SOCKET_IP, Constant.SOCKET_PORT);
-                                socket.isConnected();
-                                OutputStream ops = socket.getOutputStream();
-                                OutputStreamWriter opsw = new OutputStreamWriter(ops);
-                                BufferedWriter bw = new BufferedWriter(opsw);
-                                bw.write(feizhi_close);
-                                bw.flush();
-                                socket.close();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }.start();
-                    break;
-                case handler_result_number:
-                    new Thread() {
-                        @Override
-                        public void run() {
-                            super.run();
-                            try {
-                                result = new Socket(Constant.SOCKET_IP, Constant.SOCKET_PORT);
-                                InputStream inputStream = result.getInputStream();
-                                DataInputStream input = new DataInputStream(inputStream);
-                                while (true) {
-                                    byte[] b = new byte[1024];
-                                    int length = input.read(b);
-                                    msg_pingzi = new String(b, 0, length, "gb2312");
-                                    TLog.log(msg_pingzi);
-
-                                    if (msg_pingzi != null && !msg_pingzi.isEmpty()) {
-                                        handler.sendEmptyMessageDelayed(handler_pingzi_number, 0);
-                                    }
-                                }
-
-                            } catch (Exception ex) {
-                                ex.printStackTrace();
-                            }
-                        }
-                    }.start();
-
-                    break;
-                case handler_pingzi_number:
-                    Gson gson = new Gson();
-                    pingzi_info pingzi = gson.fromJson(msg_pingzi, pingzi_info.class);
-                    String type = pingzi.getType();
-                    if (type.equals("bottle")) {
-                        String last = pingzi.getLast();
-                        String thisX = pingzi.getThisX();
-                        if (last != null && thisX != null) {
-                            int last_count = Integer.parseInt(last);
-                            int this_count = Integer.parseInt(thisX);
-                            int number = this_count - last_count;
-                            if (pingziNumber != null) {
-                                pingziNumber.setText(number + "个");
-                            }
-                        }
-                    } else if (type.equals("paper")) {
-                        String last = pingzi.getLast();
-                        String thisX = pingzi.getThisX();
-                        if (last != null && !"".equals(last) && thisX != null && !"".equals(thisX)) {
-                            String left_last = last.replace(" ", "");
-                            TLog.log(left_last + "xxy");
-                            int kg_pos = left_last.indexOf("kg");
-                            String last_last = left_last.substring(0, kg_pos);
-                            TLog.log(last_last + "xxy");
-                            String trim_last = last_last.trim();
-                            String left_thisX = thisX.replace(" ", "");
-                            int kg_this = left_last.indexOf("kg");
-                            String thisX_thisX = left_thisX.substring(0, kg_this);
-                            String trim_this = thisX_thisX.trim();
-                            TLog.log(trim_this);
-                            TLog.log(trim_last);
-                            float thisX_float = Float.parseFloat(trim_this);
-                            float last_float = Float.parseFloat(trim_last);
-                            float number_float = thisX_float - last_float;
-                            String string_number = String.valueOf(number_float);
-                            if (string_number != null && !string_number.isEmpty()) {
-                                if (feizhiNumber != null) {
-                                    String str = String.format("%.2f", number_float);
-                                    feizhiNumber.setText(str + "千克");
-                                }
-                            } else {
-                                try {
-                                    result.close();
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        } else {
-                            ToastUtil.showLong(UiUtils.getContext(), "设备故障");
-                        }
-                    } else if (type.equals("fullbox")) {
-                        ToastUtil.showLong(UiUtils.getContext(), "仓已满,请等待工作人员清理");
-                    }
-
-                    break;
-            }
-        }
-    };
+    @BindView(R.id.children_bt)
+    Button childrenBt;
+    @BindView(R.id.type_ll)
+    LinearLayout typeLl;
+    @BindView(R.id.goon_bt)
+    Button goonBt;
+    @BindView(R.id.back_bt)
+    Button backBt;
     @BindView(R.id.toudi_style)
     TextView toudiStyle;
     @BindView(R.id.pingzi_number)
@@ -345,8 +132,69 @@ public class RecoverActivity extends BaseActivity {
     TextView feizhiNumber;
     @BindView(R.id.lin_feizhi)
     LinearLayout linFeizhi;
-    @BindView(R.id.version)
-    TextView version;
+    @BindView(R.id.yinliao_tv)
+    TextView yinliaoTv;
+    @BindView(R.id.yiwu_tv)
+    TextView yiwuTv;
+    @BindView(R.id.boli_tv)
+    TextView boliTv;
+    @BindView(R.id.suliao_tv)
+    TextView suliaoTv;
+    @BindView(R.id.zhilei_tv)
+    TextView zhileiTv;
+    @BindView(R.id.sum_ll)
+    LinearLayout sumLl;
+    boolean b_jinshu;
+    boolean b_feizhi;
+    boolean b_boli;
+    boolean b_yinliao;
+    boolean b_yifu;
+    boolean b_dianzi;
+    boolean b_suliao;
+    boolean state = false;
+    boolean state1 = false;
+    boolean state2 = false;
+    private long sumScore;
+    @BindView(R.id.xuanze_style)
+    TextView xuanzeStyle;
+
+    @BindView(R.id.version1)
+    TextView version1;
+    @BindView(R.id.upingzi)
+    TextView upingzi;
+    @BindView(R.id.uyiwu)
+    TextView uyiwu;
+    @BindView(R.id.uboli)
+    TextView uboli;
+    @BindView(R.id.usuliao)
+    TextView usuliao;
+    @BindView(R.id.uzhilei)
+    TextView uzhilei;
+    @BindView(R.id.usuliao1)
+    TextView usuliao1;
+    @BindView(R.id.uboli1)
+    TextView uboli1;
+    @BindView(R.id.upingzi1)
+    TextView upingzi1;
+    @BindView(R.id.uyiwu1)
+    TextView uyiwu1;
+    @BindView(R.id.uzhilei1)
+    TextView uzhilei1;
+    @BindView(R.id.pingzisum)
+    TextView pingzisum;
+    @BindView(R.id.yiwusum)
+    TextView yiwusum;
+    @BindView(R.id.bolisum)
+    TextView bolisum;
+    @BindView(R.id.suliaosum)
+    TextView suliaosum;
+    @BindView(R.id.feizhisum)
+    TextView feizhisum;
+    @BindView(R.id.deviceid_tv)
+    TextView deviceIdTv;
+    @BindView(R.id.appversion_tv)
+    TextView appversionTv;
+
     private String msg;
     private String msg_pingzi;
     private Socket result;
@@ -356,26 +204,29 @@ public class RecoverActivity extends BaseActivity {
     private boolean dianzi_boolean = false;
     private String token;
     private String recovery_one = null;
-    private MediaPlayer mediaPlayer;
-    private MediaPlayer start_mediaPlayer;
-    private MediaPlayer end_mediaPlayer;
     private Subscription onSubscribe;
-    private UpdateUIBroadcastReceiver broadcastReceiver;
-    private BackBroadcastReceiver backReceiver;
+    private int pingziNum = 0;
+    private Gson gson = new Gson();
 
     @Override
     public int layoutView() {
         return R.layout.activity_recover;
     }
 
+    boolean sRecyclingIsOpen = false;
+
     @Override
     public void initview(Bundle savedInstanceState) {
         super.initview(savedInstanceState);
+        Log.d("塑料的textview--", TextUtils.isEmpty(suliaoTv.getText().toString()) ? "" : "不空");
+//        sRecyclingIsOpen = ControlManagerImplMy.getInstance(RecoverActivity.this).linkToPort(ControlManagerImplMy.RECYCLING);
+        deviceIdTv.setText("设备编号：" + FileUtils.getFileContent(new File(FileUtils.filePath)));
+
         timecount = new TimeCount(180000, 1000);
         timecount.start();
-        token = SharePreferenceUtils.gettoekn(UiUtils.getContext());
-        Info();
-        startmusic();
+//        token = SharePreferenceUtils.gettoekn(UiUtils.getContext());
+//        Info();
+//        startmusic();
         String dianshi_version = PakageUtil.getAppVersion(UiUtils.getContext());
       /*  version.setText("版本:v"+dianshi_version);
         version.setOnLongClickListener(new View.OnLongClickListener() {
@@ -385,49 +236,220 @@ public class RecoverActivity extends BaseActivity {
                 return true;
             }
         });*/
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(ACTION_UPDATEUI);
-        broadcastReceiver = new UpdateUIBroadcastReceiver();
-        registerReceiver(broadcastReceiver, filter);
-        IntentFilter filter1 = new IntentFilter();
-        filter1.addAction(ACTION_BACK);
-        backReceiver = new BackBroadcastReceiver();
-        registerReceiver(backReceiver, filter1);
+//        IntentFilter filter = new IntentFilter();
+//        filter.addAction(ACTION_UPDATEUI);
+//        broadcastReceiver = new UpdateUIBroadcastReceiver();
+//        registerReceiver(broadcastReceiver, filter);
+//        IntentFilter filter1 = new IntentFilter();
+//        filter1.addAction(ACTION_BACK);
+//        backReceiver = new BackBroadcastReceiver();
+//        registerReceiver(backReceiver, filter1);
         String userName = SharePreferenceUtils.getUserName(UiUtils.getContext());
         recovery_one = getIntent().getStringExtra("RECOVERY");
-        if (recovery_one != null) {
-        } else {
-            APIWrapper.getInstance().querInitializ("Bearer " + token, Constant.MAC)
-                    .compose(new RxHelper<BaseResult>("正在加载，请稍候").io_no_main(RecoverActivity.this))
-                    .subscribe(new RxSubscriber<BaseResult>() {
-                        @Override
-                        public void _onNext(BaseResult response) {
-                            int status = response.getStatus();
-                            if (status == 200) {
-                                TLog.log("xuxinyi");
-                            } else if (status == 300) {
-                                ToastUtil.showShort(response.getMessage() + "");
-                            }
-                        }
-
-                        @Override
-                        public void _onError(String msg) {
-                            TLog.log(msg + "");
-                        }
-                    });
-        }
-        onSubscribe = Observable.interval(0, 3, TimeUnit.SECONDS)
-                .subscribeOn(Schedulers.io())
-                .compose(this.<Long>bindUntilEvent(ActivityEvent.STOP))   //当Activity执行Onstop()方法是解除订阅关系
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<Long>() {
-                    @Override
-                    public void call(Long aLong) {
-                        DeviceStates_Net(Constant.MAC);
-                    }
-                });
+//        if (recovery_one != null) {
+//        } else {
+//            APIWrapper.getInstance().querInitializ("Bearer " + token, Constant.MAC)
+//                    .compose(new RxHelper<BaseResult>("正在加载，请稍候").io_no_main(RecoverActivity.this))
+//                    .subscribe(new RxSubscriber<BaseResult>() {
+//                        @Override
+//                        public void _onNext(BaseResult response) {
+//                            int status = response.getStatus();
+//                            if (status == 200) {
+////                                TLog.log("hehehe");
+//                            } else if (status == 300) {
+////                                ToastUtil.showShort(response.getMessage() + "");
+//                            }
+//                        }
+//
+//                        @Override
+//                        public void _onError(String msg) {
+////                            TLog.log(msg + "");
+//                        }
+//                    });
+//        }
+//        onSubscribe = Observable.interval(0, 3, TimeUnit.SECONDS)
+//                .subscribeOn(Schedulers.io())
+//                .compose(this.<Long>bindUntilEvent(ActivityEvent.STOP))   //当Activity执行Onstop()方法是解除订阅关系
+//                .observeOn(AndroidSchedulers.mainThread())
+//                .subscribe(new Action1<Long>() {
+//                    @Override
+//                    public void call(Long aLong) {
+//                        DeviceStates_Net(Constant.MAC);
+//                    }
+//                });
         username.setText(userName);
+        getDataFromBoard();
+        initUnit();
     }
+
+    /**
+     * 初始化单价显示
+     */
+    private void initUnit() {
+        upingzi.setText(UnitPrice.pingzi + "");
+        usuliao.setText(UnitPrice.suliao + "");
+        uboli.setText(UnitPrice.boli + "");
+        uyiwu.setText(UnitPrice.yiwu + "");
+        uzhilei.setText(UnitPrice.zhilei + "");
+        upingzi1.setText(UnitPrice.pingzi + "积分/个");
+        usuliao1.setText(UnitPrice.suliao + "积分/KG");
+        uboli1.setText(UnitPrice.boli + "积分/KG");
+        uyiwu1.setText(UnitPrice.yiwu + "积分/KG");
+        uzhilei1.setText(UnitPrice.zhilei + "积分/KG");
+    }
+
+    private void getDataFromBoard() {
+        /**
+         * 板子数据获取
+         */
+        ControlManagerImplMy.getInstance(this).addControlCallBack(new ControlManagerImplMy.ControlCallBack() {
+            @Override
+            public void onResult(final String result) {
+                CmdResultEntity cmdResultEntity = gson.fromJson(result, CmdResultEntity.class);
+                String value = cmdResultEntity.getValue();
+                switch (cmdResultEntity.getBox_code()) {
+                    case 1: {
+                        if (cmdResultEntity.getFunc_code() == 101 && cmdResultEntity.getValue() != null) {
+                            ResultBean.pingzi = value;
+                            pingziNum++;
+                            Log.d("瓶子个数", pingziNum + "个");
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    pingziNumber.setText(pingziNum + "个");
+                                    pingzisum.setText(pingziNum * UnitPrice.pingzi + "");//瓶子小计
+                                    if (pingzisum.getText().toString() != null) {
+                                        sumScore = Integer.parseInt(pingzisum.getText().toString());
+                                    }
+                                }
+                            });
+                        }
+                        if (cmdResultEntity.getFunc_code() == 102 && !cmdResultEntity.getValue().equals("")) {
+
+                        }
+                        break;
+                    }
+                    case 2: {
+                        if (cmdResultEntity.getFunc_code() == 103 && !cmdResultEntity.getValue().equals("")) {
+                            ResultBean.suliao = cmdResultEntity.getValue();
+                            double d = Double.parseDouble(ResultBean.suliao);
+                            Log.d("responseSuliao", Arith.div(d, 100.0, 3) + "aaa");
+                            suliaoTv.setText(Arith.div(d, 100.0, 3) + "");
+                            suliaosum.setText(Math.round(Arith.div(d, 100.0, 3) * UnitPrice.suliao) + "");
+                            if (suliaosum.getText().toString() != null) {
+                                sumScore = sumScore + Math.round(Arith.div(d, 100.0, 3) * UnitPrice.suliao);
+                            }
+                        } else {
+                            suliaoTv.setText("0");
+                        }
+                        break;
+                    }
+                    case 3: {
+                        if (cmdResultEntity.getFunc_code() == 103 && !cmdResultEntity.getValue().equals("")) {
+                            ResultBean.boli = cmdResultEntity.getValue();
+                            double d = Double.parseDouble(ResultBean.boli);
+                            Log.d("responseBoli", Arith.div(d, 100.0, 3) + "aaa");
+                            boliTv.setText(Arith.div(d, 100.0, 3) + "");
+                            bolisum.setText(Math.round(Arith.div(d, 100.0, 3) * UnitPrice.boli) + "");
+                            if (bolisum.getText().toString() != null) {
+                                sumScore = sumScore + Math.round(Arith.div(d, 100.0, 3) * UnitPrice.boli);
+                            }
+                        } else {
+                            boliTv.setText("0");
+                        }
+                        break;
+                    }
+                    case 4: {
+                        if (cmdResultEntity.getFunc_code() == 103 && cmdResultEntity.getValue().length() > 0) {
+                            ResultBean.feizhi = cmdResultEntity.getValue();
+                            double d = Double.parseDouble(ResultBean.feizhi);
+                            Log.d("responseFeizhi", Arith.div(d, 100.0, 3) + "aaa");
+                            zhileiTv.setText(Arith.div(d, 100.0, 3) + "");
+                            feizhisum.setText(Math.round(Arith.div(d, 100.0, 3) * UnitPrice.zhilei) + "");
+                            if (feizhisum.getText().toString() != null) {
+                                sumScore = sumScore + Math.round(Arith.div(d, 100.0, 3) * UnitPrice.zhilei);
+                            }
+                        } else {
+                            zhileiTv.setText("0");
+                        }
+                        break;
+                    }
+                    case 5: {
+                        if (cmdResultEntity.getFunc_code() == 103 && !cmdResultEntity.getValue().equals("")) {
+                            ResultBean.yiwu = cmdResultEntity.getValue();
+                            double d = Double.parseDouble(ResultBean.yiwu);
+                            Log.d("responseYiwu", Arith.div(d, 100.0, 3) + "aaa");
+                            yiwuTv.setText(Arith.div(d, 100.0, 3) + "");
+                            yiwusum.setText(Math.round(Arith.div(d, 100.0, 3) * UnitPrice.yiwu) + "");
+                            if (yiwusum.getText().toString() != null) {
+                                sumScore = sumScore + Math.round(Arith.div(d, 100.0, 3) * UnitPrice.yiwu);
+                            }
+                        } else {
+                            yiwuTv.setText("0");
+                        }
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                sumTv.setText(sumScore + "");
+            }
+
+            @Override
+            public void onIcResult(String icResult) {
+
+            }
+        });
+    }
+
+    private Map<String, String> map = new HashMap<>();
+
+    /**
+     * 上传结算数据到服务器
+     */
+    private void getData() {
+        StringRequest stringRequest = new StringRequest(Request.Method.POST,
+                "https://weapp.iotccn.cn/garbageClassifyApi/api/device/settlement",
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.d("投递完毕", response);
+                        if (response.contains("200")) {
+                            DialogHelper.stopProgressDlg();
+                            finish();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d("投递完毕", "请求失败");
+            }
+        }) {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                map.clear();
+                map.put("token", ResultBean.token);
+                map.put("groupId", "3");
+                map.put("deviceNumber", FileUtils.getFileContent(new File(FileUtils.filePath)));
+                map.put("c1", pingziNum + "");
+                map.put("p1", pingziNum * 10 + "");
+                map.put("c2", suliaoTv.getText().toString());
+                map.put("p2", suliaosum.getText().toString());
+                map.put("c3", boliTv.getText().toString());
+                map.put("p3", bolisum.getText().toString());
+                map.put("c4", zhileiTv.getText().toString());
+                map.put("p4", feizhisum.getText().toString());
+                map.put("c5", yiwuTv.getText().toString());
+                map.put("p5", yiwusum.getText().toString());
+                map.put("t", sumTv.getText().toString());
+                return map;
+            }
+        };
+
+        stringRequest.setTag("stringRequest");
+        BaseApplication.getHttpQueues().add(stringRequest);
+    }
+
 
     public void Info() {
         APIWrapper.getInstance().querUserInfo("Bearer " + token)
@@ -436,7 +458,7 @@ public class RecoverActivity extends BaseActivity {
                     @Override
                     public void _onNext(BaseResult response) {
                         int status = response.getStatus();
-                        TLog.log(status + "");
+//                        TLog.log(status + "");
                         if (status == 200) {
                             Object message = response.getMessage();
                             if (message != null) {
@@ -447,7 +469,6 @@ public class RecoverActivity extends BaseActivity {
                                 JPushInterface.setAlias(RecoverActivity.this, 1, mobile);
                                 username.setText(nick);
                                 int achieve = user_info.getAchieve();
-                                jifen1.setText(achieve + "");
                             }
                         } else if (status == 300) {
                             ToastUtil.showShort(response.getMessage() + "");
@@ -456,7 +477,7 @@ public class RecoverActivity extends BaseActivity {
 
                     @Override
                     public void _onError(String msg) {
-                        TLog.log(msg + "");
+//                        TLog.log(msg + "");
                     }
                 });
     }
@@ -472,13 +493,7 @@ public class RecoverActivity extends BaseActivity {
                             List<String> list = response.getMessage().getDoorSet();
                             for (int i = 0; i < list.size(); i++) {
                                 String str_state = list.get(i);
-                                if ("METAL".equals(str_state)) {
-                                    b_jinshu = true;
-                                    imgJinshu.setImageResource(R.mipmap.select_jinshu);
-                                    submit.setText("结算");
-                                    xuanzeStyle.setVisibility(View.INVISIBLE);
-                                    tvTixing.setVisibility(View.INVISIBLE);
-                                } else if ("PAPER".equals(str_state)) {
+                                if ("PAPER".equals(str_state)) {
                                     b_feizhi = true;
                                     imgFeizhi.setImageResource(R.mipmap.select_feizhi);
                                     submit.setText("结算");
@@ -488,12 +503,6 @@ public class RecoverActivity extends BaseActivity {
                                         feizhi_boolean = true;
                                         imgFeizhi.setImageResource(R.mipmap.select_feizhi);
                                         xuanzeStyle.setVisibility(View.INVISIBLE);
-                                        Message message = handler.obtainMessage();
-                                        message.what = handler_feizhi_open;
-                                        handler.sendMessage(message);
-                                        Message message1 = handler.obtainMessage();
-                                        message1.what = handler_result_number;
-                                        handler.sendMessage(message1);
                                         tvTixing.setVisibility(View.INVISIBLE);
                                         submit.setText("结算");
                                         linFeizhi.setVisibility(View.VISIBLE);
@@ -514,13 +523,10 @@ public class RecoverActivity extends BaseActivity {
                                     tvTixing.setVisibility(View.INVISIBLE);
                                     if (yinliao_boolean == false) {
                                         yinliao_boolean = true;
+                                        //发送串口指令 开饮料瓶门
+//                                        uploadCmdToPort(1, 1, 1, "饮料瓶");
+
                                         imgYinliao.setImageResource(R.mipmap.select_yinliao);
-                                        Message message = handler.obtainMessage();
-                                        message.what = handler_pingzi_open;
-                                        handler.sendMessage(message);
-                                        Message message1 = handler.obtainMessage();
-                                        message1.what = handler_result_number;
-                                        handler.sendMessage(message1);
                                         xuanzeStyle.setVisibility(View.INVISIBLE);
                                         tvTixing.setVisibility(View.INVISIBLE);
                                         submit.setText("结算");
@@ -530,30 +536,19 @@ public class RecoverActivity extends BaseActivity {
                                         timecount.start();
                                     }
                                 } else if ("CLOTHES".equals(str_state)) {
-                                    b_yifu = true;
+                                    if (b_yifu = false) {
+                                        b_yifu = true;
+                                        //发送串口指令 开衣服门
+//                                        uploadCmdToPort(2, 2, 1, "衣服");
+
+                                    } else {
+                                        b_yifu = false;
+
+                                    }
                                     imgYifu.setImageResource(R.mipmap.select_yifu);
                                     submit.setText("结算");
                                     xuanzeStyle.setVisibility(View.INVISIBLE);
                                     tvTixing.setVisibility(View.INVISIBLE);
-                                } else if ("ELECTRON".equals(str_state)) {
-                                    b_dianzi = true;
-                                    imgDianzi.setImageResource(R.mipmap.select_dianzi);
-                                    submit.setText("结算");
-                                    xuanzeStyle.setVisibility(View.INVISIBLE);
-                                    tvTixing.setVisibility(View.INVISIBLE);
-                                    if (dianzi_boolean == false) {
-                                        b_dianzi = true;
-                                        dianzi_boolean = true;
-                                        imgDianzi.setImageResource(R.mipmap.select_dianzi);
-                                        xuanzeStyle.setVisibility(View.INVISIBLE);
-                                        tvTixing.setVisibility(View.INVISIBLE);
-                                        submit.setText("结算");
-                                        Message message = handler.obtainMessage();
-                                        message.what = handler_dianzi_open;
-                                        handler.sendMessage(message);
-                                        timecount.cancel();
-                                        timecount.start();
-                                    }
                                 } else if ("PLASTIC".equals(str_state)) {
                                     b_suliao = true;
                                     imgSuliao.setImageResource(R.mipmap.select_suliao);
@@ -564,7 +559,7 @@ public class RecoverActivity extends BaseActivity {
                             }
                             String page = response.getMessage().getPage();
                             if ("SETTLEMENT".equals(page)) {
-                                Toudi_State();
+
                             }
                         } else if (status == 300) {
                             ToastUtil.showShort(response.getMessage() + "");
@@ -573,7 +568,7 @@ public class RecoverActivity extends BaseActivity {
 
                     @Override
                     public void _onError(String msg) {
-                        TLog.log(msg + "");
+//                        TLog.log(msg + "");
                     }
                 });
     }
@@ -594,12 +589,10 @@ public class RecoverActivity extends BaseActivity {
 
                     @Override
                     public void _onError(String msg) {
-                        TLog.log(msg + "");
+//                        TLog.log(msg + "");
                     }
                 });
     }
-
-
 
     class TimeCount extends CountDownTimer {
         public TimeCount(long millisInFuture, long countDownInterval) {
@@ -615,12 +608,7 @@ public class RecoverActivity extends BaseActivity {
 
         @Override
         public void onFinish() {
-            String zhuangtai = submit.getText().toString();
-            if ("返回主页".equals(zhuangtai)) {
-                Sync_net();
-            } else {
-                CloseDoor();
-            }
+
         }
     }
 
@@ -631,7 +619,7 @@ public class RecoverActivity extends BaseActivity {
                     @Override
                     public void _onNext(BaseResult response) {
                         int status = response.getStatus();
-                        TLog.log(status + "");
+//                        TLog.log(status + "");
                         if (status == 200) {
                             Intent intent1 = new Intent(RecoverActivity.this, MainActivity.class);
                             timecount.cancel();
@@ -645,188 +633,160 @@ public class RecoverActivity extends BaseActivity {
 
                     @Override
                     public void _onError(String msg) {
-                        TLog.log(msg + "");
+//                        TLog.log(msg + "");
                     }
                 });
     }
 
-    private void startmusic() {
-        try {
-            mediaPlayer = new MediaPlayer().create(RecoverActivity.this, R.raw.huanyingshiyong);
-            //3 准备播放
-            // mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-            // mediaPlayer.prepare();
-            //mediaPlayer.prepareAsync();
-            // mediaPlayer.start();
-            mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                @Override
-                public void onPrepared(MediaPlayer mediaPlayer) {
-                    mediaPlayer.start();
-                }
-            });
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        if (mediaPlayer != null && mediaPlayer.isPlaying()) {
-            mediaPlayer.stop();
-            mediaPlayer.release();
-            mediaPlayer = null;
-        }
+    private boolean isOpen = false;
+    private boolean isOpen_suliao = false;
+    private boolean isChildren = true;
+
+    private boolean sendData2Board() {
+
+        uploadCmdToPort(2, 103, 0, "塑料称重");
+        SystemClock.sleep(500);
+        uploadCmdToPort(3, 103, 0, "玻璃重量");
+        SystemClock.sleep(500);
+        uploadCmdToPort(4, 103, 0, "纸张重量");
+        SystemClock.sleep(500);
+        uploadCmdToPort(5, 103, 0, "衣物重量");
+        SystemClock.sleep(500);
+        return true;
     }
 
-    private void startmusicopen() {
-        try {
-            start_mediaPlayer = new MediaPlayer().create(RecoverActivity.this, R.raw.cangmenyidakia);
-            start_mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                @Override
-                public void onPrepared(MediaPlayer mediaPlayer) {
-                    mediaPlayer.start();
-                }
-            });
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        if (start_mediaPlayer != null && start_mediaPlayer.isPlaying()) {
-            start_mediaPlayer.stop();
-            start_mediaPlayer.release();
-            start_mediaPlayer = null;
-        }
-    }
-
-    private void startmusicend() {
-        try {
-            end_mediaPlayer = new MediaPlayer().create(RecoverActivity.this, R.raw.cangmenguanbi);
-            end_mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                @Override
-                public void onPrepared(MediaPlayer mediaPlayer) {
-                    mediaPlayer.start();
-                }
-            });
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        if (end_mediaPlayer != null && end_mediaPlayer.isPlaying()) {
-            end_mediaPlayer.stop();
-            end_mediaPlayer.release();
-            end_mediaPlayer = null;
-        }
-    }
-
-    @OnClick({R.id.version,R.id.username, R.id.jifen1, R.id.img_jinshu, R.id.img_feizhi, R.id.img_boli, R.id.img_yinliao, R.id.img_yifu, R.id.img_dianzi, R.id.img_suliao, R.id.lin_number, R.id.submit})
+    @OnClick({R.id.back_bt, R.id.goon_bt, R.id.end_bt, R.id.children_bt, R.id.username, R.id.img_feizhi, R.id.img_boli, R.id.img_yinliao, R.id.img_yifu, R.id.img_suliao, R.id.lin_number, R.id.submit})
     public void onClick(View view) {
         switch (view.getId()) {
-            case R.id.username:
+            case R.id.goon_bt://继续投放
+                //todo 刷新页面重新投递
+                Intent intent = getIntent();
+                finish();
+                startActivity(intent);
                 break;
-            case R.id.jifen1:
+            case R.id.back_bt://结束
+//                DialogHelper.showProgressDlg(RecoverActivity.this, "请等待...");
+//                getData();
                 break;
-            case R.id.img_jinshu:
-                if (b_jinshu == false) {
-                    b_jinshu = true;
-                    imgJinshu.setImageResource(R.mipmap.select_jinshu);
-                    xuanzeStyle.setVisibility(View.INVISIBLE);
-                    tvTixing.setVisibility(View.INVISIBLE);
-                    submit.setText("结算");
-                    Open_Barn("METAL");
+            case R.id.end_bt://投放结束-->dialogshow-->倒计时开始-->发送数据给底板-->倒计时结束后-->请求接口
+                DialogHelper.showProgressDlg(RecoverActivity.this, "结算中,请稍后...");
+                endTimer.start();
+                clickable();
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        sendData2Board();
+                    }
+                }).start();
+
+                yinliaoTv.setText(pingziNum + "");
+                yiwuTv.setText(ResultBean.yiwu);
+                boliTv.setText(ResultBean.boli);
+                suliaoTv.setText(ResultBean.suliao);
+                zhileiTv.setText(ResultBean.feizhi);
+                //todo 上传投递数据到服务器
+                tableLayout.setVisibility(View.VISIBLE);
+                sumLl.setVisibility(View.VISIBLE);
+                endBt.setVisibility(View.INVISIBLE);
+                goonBt.setVisibility(View.VISIBLE);
+                backBt.setVisibility(View.VISIBLE);
+
+                break;
+            case R.id.children_bt:
+                if (isChildren) {
+                    isChildren = false;
+                    //切换高度
+                    LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) typeLl.getLayoutParams();
+                    layoutParams.topMargin = 600;
+                    childrenBt.setText("成人模式");
                 } else {
-                    /*b_jinshu=false;
-                    imgJinshu.setImageResource(R.mipmap.jinshu);*/
+                    isChildren = true;
+                    //切换高度
+                    LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) typeLl.getLayoutParams();
+                    layoutParams.topMargin = 0;
+                    childrenBt.setText("儿童模式");
                 }
+
+                break;
+            case R.id.username:
                 break;
             case R.id.img_feizhi:
                 if (b_feizhi == false) {
-                    startmusicopen();
+                    uploadCmdToPort(4, 1, 1, "纸类开门");
+//                    startmusicopen();
                     b_feizhi = true;
                     feizhi_boolean = true;
                     imgFeizhi.setImageResource(R.mipmap.select_feizhi);
                     xuanzeStyle.setVisibility(View.INVISIBLE);
-                    Message message = handler.obtainMessage();
-                    message.what = handler_feizhi_open;
-                    handler.sendMessage(message);
-                    Message message1 = handler.obtainMessage();
-                    message1.what = handler_result_number;
-                    handler.sendMessage(message1);
                     tvTixing.setVisibility(View.INVISIBLE);
                     submit.setText("结算");
                     linFeizhi.setVisibility(View.VISIBLE);
                     Open_Barn("PAPER");
-                    timecount.cancel();
-                    timecount.start();
+//                    timecount.cancel();
+//                    timecount.start();
                 } else {
-                   /* b_feizhi=false;
-                    imgFeizhi.setImageResource(R.mipmap.feizhi);*/
+                    uploadCmdToPort(4, 1004, 0, "纸张关门");
+                    b_feizhi = false;
+                    imgFeizhi.setImageResource(R.mipmap.feizhi);
                 }
                 break;
             case R.id.img_boli:
                 if (b_boli == false) {
+                    uploadCmdToPort(3, 1, 1, "玻璃开门");
                     b_boli = true;
                     imgBoli.setImageResource(R.mipmap.select_boli);
                     tvTixing.setVisibility(View.INVISIBLE);
                     submit.setText("结算");
                     Open_Barn("GLASS");
                 } else {
-                   /* b_boli=false;
-                    imgBoli.setImageResource(R.mipmap.boli);*/
+                    uploadCmdToPort(3, 1003, 0, "玻璃关门");
+                    b_boli = false;
+                    imgBoli.setImageResource(R.mipmap.boli);
                 }
                 break;
             case R.id.img_yinliao:
-                if (b_yinliao == false) {
-                    yinliao_boolean = true;
-                    b_yinliao = true;
-                    startmusicopen();
+//                if (b_yinliao == false) {
+                if (isOpen == false) {
+                    uploadCmdToPort(1, 1, 1, "饮料瓶开门");
+                    isOpen = true;
+                    yinliao_boolean = false;//
+                    b_yinliao = false;//
+//                    startmusicopen();
                     imgYinliao.setImageResource(R.mipmap.select_yinliao);
-                    Message message = handler.obtainMessage();
-                    message.what = handler_pingzi_open;
-                    handler.sendMessage(message);
-                    Message message1 = handler.obtainMessage();
-                    message1.what = handler_result_number;
-                    handler.sendMessage(message1);
                     xuanzeStyle.setVisibility(View.INVISIBLE);
                     tvTixing.setVisibility(View.INVISIBLE);
                     submit.setText("结算");
                     linPingzi.setVisibility(View.VISIBLE);
-                    Open_Barn("BOTTLE");
-                    timecount.cancel();
-                    timecount.start();
+//                    Open_Barn("BOTTLE");
+//                    timecount.cancel();
+//                    timecount.start();
                 } else {
-                  /*  b_yinliao=false;
-                    imgYinliao.setImageResource(R.mipmap.yinliao);*/
+                    b_yinliao = false;
+                    imgYinliao.setImageResource(R.mipmap.yinliao);
+                    isOpen = false;
                 }
                 break;
             case R.id.img_yifu:
                 if (b_yifu == false) {
+                    uploadCmdToPort(5, 1, 1, "衣服开门");
                     b_yifu = true;
-                    imgYifu.setImageResource(R.mipmap.select_yifu);
+                    imgYifu.setImageResource(R.mipmap.select_yifu);//
                     xuanzeStyle.setVisibility(View.INVISIBLE);
                     tvTixing.setVisibility(View.INVISIBLE);
                     submit.setText("结算");
                     Open_Barn("CLOTHES");
                 } else {
-                    /*b_yifu=false;
-                    imgYifu.setImageResource(R.mipmap.yifu);*/
+                    b_yifu = false;
+                    uploadCmdToPort(5, 1005, 0, "衣服关门");
+                    imgYifu.setImageResource(R.mipmap.yifu);
                 }
                 break;
-            case R.id.img_dianzi:
-                if (b_dianzi == false) {
-                    b_dianzi = true;
-                    dianzi_boolean = true;
-                    startmusicopen();
-                    imgDianzi.setImageResource(R.mipmap.select_dianzi);
-                    xuanzeStyle.setVisibility(View.INVISIBLE);
-                    tvTixing.setVisibility(View.INVISIBLE);
-                    submit.setText("结算");
-                    Message message = handler.obtainMessage();
-                    message.what = handler_dianzi_open;
-                    handler.sendMessage(message);
-                    Open_Barn("ELECTRON");
-                    timecount.cancel();
-                    timecount.start();
-                } else {
-                   /* b_dianzi=false;
-                    imgDianzi.setImageResource(R.mipmap.dianzi);*/
-                }
-                break;
+
             case R.id.img_suliao:
-                if (b_suliao == false) {
+//                if (b_suliao == false) {
+                if (isOpen_suliao == false) {
+                    uploadCmdToPort(2, 1, 1, "塑料开门");
+                    isOpen_suliao = true;
                     b_suliao = true;
                     imgSuliao.setImageResource(R.mipmap.select_suliao);
                     xuanzeStyle.setVisibility(View.INVISIBLE);
@@ -834,8 +794,10 @@ public class RecoverActivity extends BaseActivity {
                     submit.setText("结算");
                     Open_Barn("PLASTIC");
                 } else {
-                  /*  b_suliao=false;
-                    imgSuliao.setImageResource(R.mipmap.suliao);*/
+                    b_suliao = false;
+                    imgSuliao.setImageResource(R.mipmap.suliao);
+                    uploadCmdToPort(2, 1002, 0, "塑料关门");
+                    isOpen_suliao = false;
                 }
                 break;
             case R.id.lin_number:
@@ -845,194 +807,57 @@ public class RecoverActivity extends BaseActivity {
                 if ("返回主页".equals(zhuangtai)) {
                     Sync_net();
                 } else {
-                    CloseDoor();
                 }
                 break;
         }
     }
 
-    public static final String ACTION_UPDATEUI = "action.updateUI";
-    public static final String ACTION_BACK = "action.backUI";
-
-    //自动更新轮播图
-    public class UpdateUIBroadcastReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            CloseDoor();
-        }
-
-    }
-
-    public class BackBroadcastReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            TLog.log("xuxinyiback");
-            Intent intent1 = new Intent(RecoverActivity.this, MainActivity.class);
-            onSubscribe.unsubscribe();
-            timecount.cancel();
-            startActivity(intent1);
-            finish();
-        }
-    }
-
-    public void CloseDoor() {
-        APIWrapper.getInstance().querClose("Bearer " + token, Constant.MAC)
-                .compose(new RxHelper<BaseResult>("正在加载，请稍候").io_no_main(RecoverActivity.this))
-                .subscribe(new RxSubscriber<BaseResult>() {
-                    @Override
-                    public void _onNext(BaseResult response) {
-                        int status = response.getStatus();
-                        if (status == 200) {
-                            Toudi_State();
-                        } else if (status == 300) {
-
-                        }
-                    }
-
-                    @Override
-                    public void _onError(String msg) {
-                        TLog.log(msg + "");
-                    }
-                });
-    }
-
-    public void Toudi_State() {
-        Intent intent = new Intent(RecoverActivity.this, BalanceActivity.class);
-        String feizhi_jin = feizhiNumber.getText().toString();
-        String sub_feizhi = feizhi_jin.substring(0, feizhi_jin.length() - 2);
-        String pingzi_ge = pingziNumber.getText().toString();
-        String sub_pingzi = pingzi_ge.substring(0, pingzi_ge.length() - 1);
-        if (b_yinliao == true && b_dianzi != true && b_feizhi != true) {
-            intent.putExtra("pingzi", sub_pingzi);
-            intent.putExtra("BOTTLE", "BOTTLE");
-            Message message0 = handler.obtainMessage();
-            message0.what = handler_pingzi_close;
-            handler.sendMessage(message0);
-            state = true;
-        } else if (b_yinliao != true && b_dianzi == true && b_feizhi != true) {
-            intent.putExtra("ELECTRON", "ELECTRON");
-            Message message1 = handler.obtainMessage();
-            message1.what = handler_dianzi_close;
-            handler.sendMessage(message1);
-            state1 = true;
-        } else if (b_feizhi == true && b_yinliao != true && b_dianzi != true) {
-            intent.putExtra("feizhi", sub_feizhi);
-            intent.putExtra("PAPER", "PAPER");
-            Message message = handler.obtainMessage();
-            message.what = handler_feizhi_close;
-            handler.sendMessage(message);
-            state2 = true;
-        } else if (b_feizhi == true && b_yinliao == true && b_dianzi != true) {
-            intent.putExtra("pingzi", sub_pingzi);
-            intent.putExtra("BOTTLE", "BOTTLE");
-            Message message0 = handler.obtainMessage();
-            message0.what = handler_pingzi_close;
-            handler.sendMessage(message0);
-            state = true;
-            intent.putExtra("feizhi", sub_feizhi);
-            intent.putExtra("PAPER", "PAPER");
-            Message message = handler.obtainMessage();
-            message.what = handler_feizhi_close;
-            handler.sendMessage(message);
-            state2 = true;
-        } else if (b_feizhi == true && b_yinliao != true && b_dianzi == true) {
-            Message message0 = handler.obtainMessage();
-            message0.what = handler_dianzi_close;
-            handler.sendMessage(message0);
-            state1 = true;
-            intent.putExtra("feizhi", sub_feizhi);
-            intent.putExtra("PAPER", "PAPER");
-            Message message = handler.obtainMessage();
-            message.what = handler_feizhi_close;
-            handler.sendMessage(message);
-            state2 = true;
-        } else if (b_feizhi != true && b_yinliao == true && b_dianzi == true) {
-            intent.putExtra("pingzi", sub_pingzi);
-            intent.putExtra("BOTTLE", "BOTTLE");
-            Message message0 = handler.obtainMessage();
-            message0.what = handler_pingzi_close;
-            handler.sendMessage(message0);
-            state = true;
-            intent.putExtra("ELECTRON", "ELECTRON");
-            Message message1 = handler.obtainMessage();
-            message1.what = handler_dianzi_close;
-            handler.sendMessage(message1);
-            state1 = true;
-        } else if (b_feizhi == true && b_yinliao == true && b_dianzi == true) {
-            intent.putExtra("pingzi", sub_pingzi);
-            intent.putExtra("BOTTLE", "BOTTLE");
-            Message message0 = handler.obtainMessage();
-            message0.what = handler_pingzi_close;
-            handler.sendMessage(message0);
-            state = true;
-            intent.putExtra("ELECTRON", "ELECTRON");
-            Message message1 = handler.obtainMessage();
-            message1.what = handler_dianzi_close;
-            handler.sendMessage(message1);
-            state1 = true;
-            intent.putExtra("feizhi", sub_feizhi);
-            intent.putExtra("PAPER", "PAPER");
-            Message message = handler.obtainMessage();
-            message.what = handler_feizhi_close;
-            handler.sendMessage(message);
-            state2 = true;
-        }
-        if (state == true && state1 != true && state2 != true) {
-            try {
-                result.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else if (state == true && state1 == true && state2 != true) {
-            try {
-                result.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else if (state == true && state1 != true && state2 == true) {
-            try {
-                result.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else if (state != true && state1 == true && state2 == true) {
-            try {
-                result.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else if (state != true && state1 != true && state2 == true) {
-            try {
-                result.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else if (state == true && state1 == true && state2 == true) {
-            try {
-                result.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else if (state != true && state1 == true && state2 != true) {
-            try {
-                //  result.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        onSubscribe.unsubscribe();
-        startmusicend();
-        timecount.cancel();
-        startActivity(intent);
-        finish();
+    @Override
+    protected void onResume() {
+        super.onResume();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        onSubscribe.unsubscribe();
-        unregisterReceiver(broadcastReceiver);
-        unregisterReceiver(backReceiver);
-        //backReceiver
+        timecount.cancel();
     }
+
+    /**
+     * 点击投放结束后设置不可点击
+     */
+    private void clickable() {
+        imgYinliao.setClickable(false);
+        imgBoli.setClickable(false);
+        imgFeizhi.setClickable(false);
+        imgYifu.setClickable(false);
+        imgSuliao.setClickable(false);
+        endBt.setClickable(false);
+    }
+
+    /**
+     * @param position 柜子号
+     * @param funCode  功能码
+     * @param status   状态
+     * @param name     柜子名称
+     */
+    private void uploadCmdToPort(int position, int funCode, int status, String name) {
+//        int boxCode = unitEntities.get(position).getUnit_no();//获取配件编号
+        String jsonCmd = ControlManagerImplMy.getInstance(getApplicationContext()).testJsonCmdStr(position
+                , funCode, status, name);
+        Log.d("jsonCmd", jsonCmd);
+        ControlManagerImplMy.getInstance(getApplicationContext()).sendCmdToPort(ControlManagerImplMy.RECYCLING, jsonCmd);
+    }
+
+    CountDownTimer endTimer = new CountDownTimer(6 * 1000, 1000) {
+        @Override
+        public void onTick(long millisUntilFinished) {
+
+        }
+
+        @Override
+        public void onFinish() {
+            getData();
+        }
+    };
 }

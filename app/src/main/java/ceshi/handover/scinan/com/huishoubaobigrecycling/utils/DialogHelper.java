@@ -100,6 +100,7 @@ public class DialogHelper {
             progressDlg.setMessage(strMessage);
             progressDlg.setIndeterminate(false);
             progressDlg.setCancelable(true);
+            progressDlg.setCanceledOnTouchOutside(false);
             progressDlg.show();
         }
     }

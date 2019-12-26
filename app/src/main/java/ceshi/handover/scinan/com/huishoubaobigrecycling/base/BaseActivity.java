@@ -14,6 +14,7 @@ import com.trello.rxlifecycle.components.support.RxAppCompatActivity;
 
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
+import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.BaseApplication;
 
 
 public abstract class BaseActivity extends RxAppCompatActivity {
@@ -78,7 +79,11 @@ public abstract class BaseActivity extends RxAppCompatActivity {
 	}*/
 	@Override
 	public void onDestroy() {
+		//将activity从堆栈中移除
+		BaseApplication.getInstance().getRequestQueue().cancelAll("VolleyRequest");
+
 		super.onDestroy();
+
 		unbinder.unbind();
 		ImmersionBar.with(this).destroy();
 	}

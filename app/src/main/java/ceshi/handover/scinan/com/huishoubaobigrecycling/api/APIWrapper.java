@@ -1,24 +1,14 @@
 package ceshi.handover.scinan.com.huishoubaobigrecycling.api;
 
 
-
-
-
-
-
-
-
-
-
-
 import java.util.Map;
 
 import ceshi.handover.scinan.com.huishoubaobigrecycling.api.net.RetrofitUtil;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.BaseResult;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.DeviceState_Info;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.Erweima;
-import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.Face_Info;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.LunBo_Info;
+import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.Lunbo;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.Response;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.Version_Info;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.request_result;
@@ -33,61 +23,73 @@ public class APIWrapper extends RetrofitUtil {
 
     private static APIWrapper mAPIWrapper;
 
-    public APIWrapper(){
+    public APIWrapper() {
     }
 
-    public static APIWrapper getInstance(){
-        if(mAPIWrapper == null) {
+    public static APIWrapper getInstance() {
+        if (mAPIWrapper == null) {
             mAPIWrapper = new APIWrapper();
         }
         return mAPIWrapper;
     }
-    public Observable <LunBo_Info> queryOneLunBO(String username) {
-        Observable <LunBo_Info> observable = getAPIService(2).getOneLunBo(username);
+
+    public Observable<Lunbo> queryOneLunBO(String token,String groupId,String type,String positions) {
+        Observable<Lunbo> observable = getAPIService(2).getOneLunBo(token,groupId,type,positions);
         return observable;
     }
-    public Observable <Erweima> queryErweima() {
-        Observable <Erweima> observable = getAPIService(2).getErweima();
+
+    public Observable<Erweima> queryErweima() {
+        Observable<Erweima> observable = getAPIService(2).getErweima();
         return observable;
     }
-    public Observable <BaseResult> querInitializ(String token,String identity) {
-        Observable <BaseResult> observable = getAPIService(2).getInitializ(token,identity);
+
+    public Observable<BaseResult> querInitializ(String token, String identity) {
+        Observable<BaseResult> observable = getAPIService(2).getInitializ(token, identity);
         return observable;
     }
-    public Observable <DeviceState_Info> querDeviceState(String token,String identity) {
-        Observable <DeviceState_Info> observable = getAPIService(2).getDeviceState(token,identity);
+
+    public Observable<DeviceState_Info> querDeviceState(String token, String identity) {
+        Observable<DeviceState_Info> observable = getAPIService(2).getDeviceState(token, identity);
         return observable;
     }
-    public Observable <BaseResult> querOPenBarn(String token,String alias,String identity) {
-        Observable <BaseResult> observable = getAPIService(2).getOPenBarn(token,alias,identity);
+
+    public Observable<BaseResult> querOPenBarn(String token, String alias, String identity) {
+        Observable<BaseResult> observable = getAPIService(2).getOPenBarn(token, alias, identity);
         return observable;
     }
-    public Observable <BaseResult> querFace(String url, Map<String, RequestBody> files) {
-        Observable <BaseResult> observable = getAPIService(1).getFace(url,files);
+
+    public Observable<BaseResult> querFace(String url, Map<String, RequestBody> files) {
+        Observable<BaseResult> observable = getAPIService(1).getFace(url, files);
         return observable;
     }
-    public Observable <request_result_info> querRequest(String token,request_result alias) {
-        Observable <request_result_info> observable = getAPIService(2).getRequest(token,alias);
+
+    public Observable<request_result_info> querRequest(String token, request_result alias) {
+        Observable<request_result_info> observable = getAPIService(2).getRequest(token, alias);
         return observable;
     }
-    public Observable <BaseResult> querJieSu(String token,String biaoshi) {
-        Observable <BaseResult> observable = getAPIService(2).getJieSu(token,biaoshi);
+
+    public Observable<BaseResult> querJieSu(String token, String biaoshi) {
+        Observable<BaseResult> observable = getAPIService(2).getJieSu(token, biaoshi);
         return observable;
     }
-    public Observable <BaseResult> querUserInfo(String token) {
-        Observable <BaseResult> observable = getAPIService(2).getUserInfo(token);
+
+    public Observable<BaseResult> querUserInfo(String token) {
+        Observable<BaseResult> observable = getAPIService(2).getUserInfo(token);
         return observable;
     }
-    public Observable <Version_Info> querVersion(String token) {
-        Observable <Version_Info> observable = getAPIService(2).getDeviceVersion(token);
+
+    public Observable<Version_Info> querVersion(String token) {
+        Observable<Version_Info> observable = getAPIService(2).getDeviceVersion(token);
         return observable;
     }
-    public Observable <BaseResult> querClose(String token,String identity) {
-        Observable <BaseResult> observable = getAPIService(2).getClose(token,identity);
+
+    public Observable<BaseResult> querClose(String token, String identity) {
+        Observable<BaseResult> observable = getAPIService(2).getClose(token, identity);
         return observable;
     }
-    public Observable <BaseResult> querSync(String token,String identity) {
-        Observable <BaseResult> observable = getAPIService(2).getSync(token,identity);
+
+    public Observable<BaseResult> querSync(String token, String identity) {
+        Observable<BaseResult> observable = getAPIService(2).getSync(token, identity);
         return observable;
     }
    /* public Observable <BaseResult> querylogin(String username,String password) {
@@ -162,10 +164,11 @@ public class APIWrapper extends RetrofitUtil {
                 .subscribe(s);
     }
 */
+
     /**
      * 用来统一处理Http的resultCode,并将HttpResult的Data部分剥离出来返回给subscriber
      *
-     * @param <T>   Subscriber真正需要的数据类型，也就是Data部分的数据类型
+     * @param <T> Subscriber真正需要的数据类型，也就是Data部分的数据类型
      */
     private class ResponseFunc<T> implements Func1<Response<T>, T> {
 
