@@ -121,7 +121,8 @@ public class MainActivity extends BaseActivity {
     final static int COUNTS = 4;// 点击次数
     final static long DURATION = 1000;// 规定有效时间
     long[] mHits = new long[COUNTS];
-
+    boolean icCardIsOpen = false;
+    private boolean icCheck = false;
     int count = 0;
     private Handler mHandler = new Handler() {
         @Override
@@ -186,6 +187,69 @@ public class MainActivity extends BaseActivity {
         BaseApplication.getHttpQueues().add(stringRequestImage);
     }
 
+    private void icLogin(final String deviceId, final String groupId, final String icNumber) {
+        StringRequest stringRequest = new StringRequest(Request.Method.POST,
+                Constant.phoneLogin,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.d("IC login", "onResponse: " + response);
+                        if (response.contains("\"status\":200")) {
+                            icCheck = false;
+                            LoginResult loginResult = new LoginResult();
+                            loginResult = gson.fromJson(response, LoginResult.class);
+                            for (int i = 0; i < loginResult.getData().getUser().getCategory().size(); i++) {
+                                String name = loginResult.getData().getUser().getCategory().get(i).getName();
+                                if (name.equals("塑料瓶")) {
+                                    UnitPrice.pingzi = loginResult.getData().getUser().getCategory().get(i).getPoint();
+                                }
+                                if (name.equals("塑料")) {
+                                    UnitPrice.suliao = loginResult.getData().getUser().getCategory().get(i).getPoint();
+                                }
+                                if (name.equals("纸类")) {
+                                    UnitPrice.zhilei = loginResult.getData().getUser().getCategory().get(i).getPoint();
+                                }
+                                if (name.equals("纺织物")) {
+                                    UnitPrice.yiwu = loginResult.getData().getUser().getCategory().get(i).getPoint();
+                                }
+                                if (name.equals("玻璃")) {
+                                    UnitPrice.boli = loginResult.getData().getUser().getCategory().get(i).getPoint();
+                                }
+                            }
+                            ResultBean.token = loginResult.getData().getUser().getToken();
+                            Intent intent = new Intent(MainActivity.this, RoleChooseActivity.class);
+                            startActivity(intent);
+                        } else {
+                            Log.d("IC login", "onResponse: " + response);
+                            icCheck = true;
+                            Toast.makeText(getApplicationContext(), "登录失败", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                icCheck = true;
+                Toast.makeText(getApplicationContext(), "请求失败", Toast.LENGTH_SHORT).show();
+            }
+        }) {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                map.clear();
+                map.put("icNumber", icNumber);
+                map.put("deviceNumber", deviceId);
+                map.put("groupId", groupId);
+                return map;
+            }
+        };
+        stringRequest.setTag("stringRequest");
+        BaseApplication.getHttpQueues().add(stringRequest);
+    }
+
+    /**
+     * 手机号登录
+     *
+     * @param deviceNumber
+     */
     private void phoneLogin(final String deviceNumber) {
         StringRequest stringRequest = new StringRequest(Request.Method.POST,
                 Constant.phoneLogin,
@@ -193,7 +257,7 @@ public class MainActivity extends BaseActivity {
                     @Override
                     public void onResponse(String response) {
                         Log.d("登录", response);
-                        if (response.contains("200")) {
+                        if (response.contains("\"status\":200")) {
                             LoginResult loginResult = new LoginResult();
                             loginResult = gson.fromJson(response, LoginResult.class);
                             for (int i = 0; i < loginResult.getData().getUser().getCategory().size(); i++) {
@@ -233,6 +297,7 @@ public class MainActivity extends BaseActivity {
                 map.clear();
                 map.put("phone", phonenumet.getText().toString());
                 map.put("deviceNumber", deviceNumber);
+                map.put("groupId", "3");
                 return map;
             }
         };
@@ -244,15 +309,11 @@ public class MainActivity extends BaseActivity {
     public void initview(Bundle savedInstanceState) {
 
         super.initview(savedInstanceState);
-        //打开串口
 
-        sRecyclingIsOpen = ControlManagerImplMy.getInstance(MainActivity.this).linkToPort(ControlManagerImplMy.RECYCLING);
-        sRecyclingIsOpen = ControlManagerImplMy.getInstance(MainActivity.this).linkToPort(ControlManagerImplMy.IC_CARD);
         hideBottomUIMenu();//隐藏底部虚拟按钮
         JPushInterface.init(this);
         //设置debug模式
         JPushInterface.setDebugMode(true);
-        getBoardData();//底板数据
 //        Create_File();
         // readFile();
         String[] perms = {Manifest.permission.CALL_PHONE,
@@ -310,9 +371,9 @@ public class MainActivity extends BaseActivity {
             @Override
             public void run() {
                 // 连接端口
-//                sRecyclingIsOpen = ControlManagerImplMy.getInstance(MainActivity.this).linkToPort(ControlManagerImplMy.RECYCLING);
+                sRecyclingIsOpen = ControlManagerImplMy.getInstance(MainActivity.this).linkToPort(ControlManagerImplMy.RECYCLING);
                 //IC读卡器串口
-//                icCardIsOpen = ControlManagerImplMy.getInstance(MainActivity.this).linkToPort(ControlManagerImplMy.IC_CARD);
+                icCardIsOpen = ControlManagerImplMy.getInstance(MainActivity.this).linkToPort(ControlManagerImplMy.IC_CARD);
 //                if(sRecyclingIsOpen){
 //                    //获取设备编号
 //                    String jsonCmd = ControlManagerImplMy.getInstance(MainActivity.this).testJsonCmdStr(1
@@ -373,7 +434,10 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        getBoardData();//底板数据
+
         isShow = true;
+        icCheck = true;
 //        mHandler.postDelayed(task, 3000);//首次调用延时3秒执行
 
     }
@@ -381,6 +445,7 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        icCheck = false;
         //当activity不在前台是停止定时
         if (countDownTimer != null) {
             countDownTimer.cancel();
@@ -801,7 +866,16 @@ public class MainActivity extends BaseActivity {
             }
 
             @Override
-            public void onIcResult(String icResult) {
+            public void onIcResult(final String icResult) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getApplicationContext(), icResult + "", Toast.LENGTH_SHORT).show();
+                        if (icCheck) {
+                            icLogin(deviceId, "3", icResult);
+                        }
+                    }
+                });
 
             }
         });

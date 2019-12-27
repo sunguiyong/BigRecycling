@@ -239,7 +239,7 @@ public class ControlManagerImplMy implements IControlManager {
     }
 
     /**
-     * 读卡回调方法
+     * 读卡回调方法(废弃)
      *
      * @param resultBytes
      */
@@ -571,7 +571,7 @@ public class ControlManagerImplMy implements IControlManager {
         } else {
             ///dev/ttyS4
 //            return this.open("/dev/ttyUSB11",9600);
-            return port_num == IC_CARD ? this.openIC("/dev/ttyS4", 9600) : false;
+            return port_num == IC_CARD ? this.openIC("/dev/ttyS3", 9600) : false;
         }
     }
 
@@ -990,10 +990,12 @@ public class ControlManagerImplMy implements IControlManager {
         if (func_code == 101) {
             value = DataConvertUtilMy.bytesToIntLittleCopy(messageEntity.getContent_bytes(), 0) + "";
         }
-        //测距 低位在前，高位在后
+        //测距 高位在前，低位在后
         if (func_code == 102) {
-            value = DataConvertUtil.bytesToIntLittle(messageEntity.getContent_bytes(), 0) + "";
+//            value = DataConvertUtil.bytesToIntLittle(messageEntity.getContent_bytes(), 0) + "";
+            value = DataConvertUtilMy.bytesToIntLittle(messageEntity.getContent_bytes(), 0) + "";
         }
+
         //称重
         if (func_code == 103) {
             value = DataConvertUtilMy.bytesToIntLittleCopy1(messageEntity.getContent_bytes(), 1) + "";
@@ -1163,6 +1165,25 @@ public class ControlManagerImplMy implements IControlManager {
     }
 
     /**
+     * 读卡数据回调  使用中
+     * @param resultBytes
+     */
+    private void handlerIcCardCallBack(int[] resultBytes) {
+        int[] bytes = new int[]{resultBytes[3], resultBytes[4], resultBytes[5], resultBytes[6]};
+//        int ID = DataConvertUtil.bytesToIntBig(bytes, 0);
+        String[] strHex = new String[4];
+        for (int i = 0; i < bytes.length; i++) {
+            strHex[i] = Integer.toHexString(bytes[i]);
+        }
+        StringBuffer s = new StringBuffer();
+        for (int i = 0; i < strHex.length; i++) {
+            s = s.append(strHex[i]);
+        }
+        this.controlCallBack.onIcResult("" + s);
+    }
+
+
+    /**
      * IC卡读取线程
      */
     private class SaleReceiveThread extends Thread {
@@ -1171,63 +1192,88 @@ public class ControlManagerImplMy implements IControlManager {
 
         public void run() {
             super.run();
-            InputStream mInputStream = ControlManagerImplMy.this.mSerialPortIC.getInputStream();
-            int maxLength = 512;
-            byte[] buffer = new byte[maxLength];
-            boolean availablex = false;
-            int currentLength = 0;
+            InputStream inputStream = mSerialPortIC.getInputStream();
+            while (true) {
+                try {
+                    if (inputStream.available() > 0) {
+                        Thread.sleep(200);
+                        byte[] bytes = new byte[inputStream.available()];
+                        int[] temp = new int[inputStream.available()];
 
-            for (boolean var6 = true; ControlManagerImplMy.this.mSerialPortIC != null && mInputStream != null; SystemClock.sleep(2L)) {
-                synchronized (this) {
-                    try {
-                        int available = mInputStream.available();
-                        if (available > 0) {
-                            if (available > maxLength - currentLength) {
-                                available = maxLength - currentLength;
-                            }
 
-                            mInputStream.read(buffer, currentLength, available);
-                            currentLength += available;
+                        int size = inputStream.read(bytes);
+                        String str = new String(bytes);
+                        for (int i = 0; i < bytes.length; i++) {
+                            temp[i] = bytes[i] & 0xff;
                         }
-                    } catch (Exception var12) {
-                        var12.printStackTrace();
+                        ControlManagerImplMy.this.handlerIcCardCallBack(temp);
+
+                        Log.d(TAG, "inputStream-run: " + size + "===" + str);
                     }
-
-                    int cursor = 0;
-
-                    while (true) {
-                        while (currentLength >= 6) {
-                            if (buffer[cursor] != 2) {
-                                --currentLength;
-                                ++cursor;
-                            } else {
-                                int factPackLen = 0;
-
-                                for (int i = 0; i < buffer.length; ++i) {
-                                    if (buffer[i] == 3) {
-                                        factPackLen = i + 1;
-                                    }
-                                }
-
-                                byte[] realPackBytes = new byte[factPackLen];
-                                System.arraycopy(buffer, cursor, realPackBytes, 0, factPackLen);
-                                ControlManagerImplMy.this.handlerIcCardCallBack(realPackBytes);
-                                currentLength -= factPackLen;
-                                cursor += factPackLen;
-                            }
-                        }
-
-                        if (currentLength > 0 && cursor > 0) {
-                            System.arraycopy(buffer, cursor, buffer, 0, currentLength);
-                        }
-
-                        SystemClock.sleep(2L);
-                        break;
-                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
 
-            ControlManagerImplMy.this.close();
+//            InputStream mInputStream = ControlManagerImplMy.this.mSerialPortIC.getInputStream();
+//            int maxLength = 512;
+//            byte[] buffer = new byte[maxLength];
+//            boolean availablex = false;
+//            int currentLength = 0;
+//
+//            for (boolean var6 = true; ControlManagerImplMy.this.mSerialPortIC != null && mInputStream != null; SystemClock.sleep(2L)) {
+//                synchronized (this) {
+//                    try {
+//                        int available = mInputStream.available();
+//                        if (available > 0) {
+//                            if (available > maxLength - currentLength) {
+//                                available = maxLength - currentLength;
+//                            }
+//
+//                            mInputStream.read(buffer, currentLength, available);
+//                            currentLength += available;
+//                        }
+//                    } catch (Exception var12) {
+//                        var12.printStackTrace();
+//                    }
+//
+//                    int cursor = 0;
+//
+//                    while (true) {
+//                        while (currentLength >= 6) {
+//                            if (buffer[cursor] != 2) {
+//                                --currentLength;
+//                                ++cursor;
+//                            } else {
+//                                int factPackLen = 0;
+//
+//                                for (int i = 0; i < buffer.length; ++i) {
+//                                    if (buffer[i] == 3) {
+//                                        factPackLen = i + 1;
+//                                    }
+//                                }
+//
+//                                byte[] realPackBytes = new byte[factPackLen];
+//                                System.arraycopy(buffer, cursor, realPackBytes, 0, factPackLen);
+//                                ControlManagerImplMy.this.handlerIcCardCallBack(realPackBytes);
+//                                currentLength -= factPackLen;
+//                                cursor += factPackLen;
+//                            }
+//                        }
+//
+//                        if (currentLength > 0 && cursor > 0) {
+//                            System.arraycopy(buffer, cursor, buffer, 0, currentLength);
+//                        }
+//
+//                        SystemClock.sleep(2L);
+//                        break;
+//                    }
+//                }
+//            }
+//
+//            ControlManagerImplMy.this.close();
         }
     }
 

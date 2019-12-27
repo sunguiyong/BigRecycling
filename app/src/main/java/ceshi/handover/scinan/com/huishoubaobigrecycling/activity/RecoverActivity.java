@@ -79,6 +79,12 @@ import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
+import static ceshi.handover.scinan.com.huishoubaobigrecycling.bean.ResultBean.boliH;
+import static ceshi.handover.scinan.com.huishoubaobigrecycling.bean.ResultBean.feizhiH;
+import static ceshi.handover.scinan.com.huishoubaobigrecycling.bean.ResultBean.pingziH;
+import static ceshi.handover.scinan.com.huishoubaobigrecycling.bean.ResultBean.suliaoH;
+import static ceshi.handover.scinan.com.huishoubaobigrecycling.bean.ResultBean.yiwuH;
+
 
 /**
  * 瓶 塑 玻 纸 纺
@@ -325,7 +331,7 @@ public class RecoverActivity extends BaseActivity {
                             });
                         }
                         if (cmdResultEntity.getFunc_code() == 102 && !cmdResultEntity.getValue().equals("")) {
-
+                            pingziH = cmdResultEntity.getValue();
                         }
                         break;
                     }
@@ -342,6 +348,9 @@ public class RecoverActivity extends BaseActivity {
                         } else {
                             suliaoTv.setText("0");
                         }
+                        if (cmdResultEntity.getFunc_code() == 102 && !cmdResultEntity.getValue().equals("")) {
+                            suliaoH = cmdResultEntity.getValue();
+                        }
                         break;
                     }
                     case 3: {
@@ -356,6 +365,9 @@ public class RecoverActivity extends BaseActivity {
                             }
                         } else {
                             boliTv.setText("0");
+                        }
+                        if (cmdResultEntity.getFunc_code() == 102 && !cmdResultEntity.getValue().equals("")) {
+                            boliH = cmdResultEntity.getValue();
                         }
                         break;
                     }
@@ -372,6 +384,9 @@ public class RecoverActivity extends BaseActivity {
                         } else {
                             zhileiTv.setText("0");
                         }
+                        if (cmdResultEntity.getFunc_code() == 102 && !cmdResultEntity.getValue().equals("")) {
+                            feizhiH = cmdResultEntity.getValue();
+                        }
                         break;
                     }
                     case 5: {
@@ -386,6 +401,9 @@ public class RecoverActivity extends BaseActivity {
                             }
                         } else {
                             yiwuTv.setText("0");
+                        }
+                        if (cmdResultEntity.getFunc_code() == 102 && !cmdResultEntity.getValue().equals("")) {
+                            yiwuH = cmdResultEntity.getValue();
                         }
                         break;
                     }
@@ -403,9 +421,10 @@ public class RecoverActivity extends BaseActivity {
     }
 
     private Map<String, String> map = new HashMap<>();
+    private Map<String,String> mapH=new HashMap<>();
 
     /**
-     * 上传结算数据到服务器
+     * 上传重量和积分结算数据到服务器
      */
     private void getData() {
         StringRequest stringRequest = new StringRequest(Request.Method.POST,
@@ -446,6 +465,49 @@ public class RecoverActivity extends BaseActivity {
             }
         };
 
+        stringRequest.setTag("stringRequest");
+        BaseApplication.getHttpQueues().add(stringRequest);
+    }
+
+    /**
+     * 上传距离数据到服务器
+     */
+    private void getDataH(){
+        StringRequest stringRequest=new StringRequest(Request.Method.POST, "", new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+            }
+        }){
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                mapH.clear();
+                mapH.put("token",ResultBean.token);
+                mapH.put("groupId","3");
+                mapH.put("deviceNumber",FileUtils.getFileContent(new File(FileUtils.filePath)));
+                mapH.put("categoryId1", pingziH);
+                mapH.put("state1", suliaoH);
+//                mapH.put("weghtQuantity1",);
+//                mapH.put("categoryId2",);
+//                mapH.put("state2",);
+//                mapH.put("weghtQuantity2",);
+//                mapH.put("categoryId3",);
+//                mapH.put("state3",);
+//                mapH.put("weghtQuantity3",);
+//                mapH.put("categoryId4",);
+//                mapH.put("state4",);
+//                mapH.put("weghtQuantity4",);
+//                mapH.put("categoryId5",);
+//                mapH.put("state5",);
+//                mapH.put("weghtQuantity5",);
+                return mapH;
+            }
+        };
         stringRequest.setTag("stringRequest");
         BaseApplication.getHttpQueues().add(stringRequest);
     }
@@ -821,6 +883,11 @@ public class RecoverActivity extends BaseActivity {
     public void onDestroy() {
         super.onDestroy();
         timecount.cancel();
+        ResultBean.boli = "";
+        ResultBean.feizhi = "";
+        ResultBean.pingzi = "";
+        ResultBean.suliao = "";
+        ResultBean.yiwu = "";
     }
 
     /**

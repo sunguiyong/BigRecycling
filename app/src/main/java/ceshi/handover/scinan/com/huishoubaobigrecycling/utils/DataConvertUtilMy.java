@@ -135,12 +135,14 @@ public class DataConvertUtilMy {
 
     /**
      * 测距模块
+     *
      * @param src
      * @param offset
      * @return
      */
     public static int bytesToIntLittle(byte[] src, int offset) {
-        int value = src[offset] & 255 | (src[offset + 1] & 255) << 8 | (src[offset + 2] & 255) << 16 | (src[offset + 3] & 255) << 24;
+//        int value = src[offset] & 255 | (src[offset + 1] & 255) << 8 | (src[offset + 2] & 255) << 16 | (src[offset + 3] & 255) << 24;
+        int value = src[offset] & 255 << 24 | (src[offset + 1] & 255) << 16 | (src[offset + 2] & 255) << 8 | src[offset + 3] & 255;
         return value;
     }
 
