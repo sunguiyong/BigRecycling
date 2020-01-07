@@ -9,10 +9,12 @@ import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.Erweima;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.Face_Info;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.LunBo_Info;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.Lunbo;
+import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.Response;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.Version_Info;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.request_result;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.request_result_info;
 import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
 import retrofit2.http.Body;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
@@ -23,6 +25,7 @@ import retrofit2.http.Multipart;
 import retrofit2.http.POST;
 import retrofit2.http.PartMap;
 import retrofit2.http.Query;
+import retrofit2.http.Streaming;
 import retrofit2.http.Url;
 import rx.Observable;
 
@@ -31,6 +34,21 @@ import rx.Observable;
  * Retrofit 2.0中我们还可以在@Url里面定义完整的URL：这种情况下Base URL会被忽略。
  */
 public interface APIService {
+    String downloadApkUrl =
+            "http://114.116.37.87:8084/garbageClassifyManageSystem/version/downLoadFile?" +
+                    "path=C:/energySystem/tomcat-8084/webapps/garbageClassifyManageSystem/resources/testupload/";
+
+    @GET("1.zip")
+    Observable<ResponseBody> downloadApk();
+
+    /**
+     * 下载
+     * @param url
+     * @return
+     */
+    @Streaming
+    @GET
+    Observable<ResponseBody> download(@Url String url);
 
     /**
      * getLogin()

@@ -5,4 +5,7 @@ public class SaveData {
     public static String version;
     public static String doorType;
     public static String groupId;
+
+    public static String deviceId;
+    public static boolean binUpdate;
 }

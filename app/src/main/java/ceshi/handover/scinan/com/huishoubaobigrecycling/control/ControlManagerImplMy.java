@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import ceshi.handover.scinan.com.huishoubaobigrecycling.activity.MainActivity;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.entity.SaveData;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.DataConvertUtilMy;
 import io.reactivex.BackpressureStrategy;
@@ -233,9 +234,8 @@ public class ControlManagerImplMy implements IControlManager {
     private void startReceiveThread() {
         if (this.mSaleReceiverThread == null) {
             this.mSaleReceiverThread = new ControlManagerImplMy.SaleReceiveThread();
+            this.mSaleReceiverThread.start();
         }
-
-        this.mSaleReceiverThread.start();
     }
 
     /**
@@ -278,13 +278,10 @@ public class ControlManagerImplMy implements IControlManager {
             //subscribe订阅
             public void subscribe(FlowableEmitter<byte[]> emitter) throws Exception {
                 InputStream mInputStream = ControlManagerImplMy.this.mSerialPort.getInputStream();
-                int maxLength = 100;
-                byte[] buffer = new byte[maxLength];
-                int available = 0;
+                final int maxLength = 100;
+                final byte[][] buffer = {new byte[maxLength]};
+//                int available = 0;
                 int currentLength = 0;
-
-                //升级用
-                byte[] buffer1 = new byte[2];
 
                 //!ControlManagerImplMy.this.isInterrupted &&
                 for (byte headerLength = 10; ControlManagerImplMy.this.mSerialPort != null && mInputStream != null; SystemClock.sleep(2L)) {
@@ -296,9 +293,9 @@ public class ControlManagerImplMy implements IControlManager {
                                     availablex = maxLength - currentLength;
                                 }
                                 //读数据
-                                mInputStream.read(buffer, currentLength, availablex);
+                                mInputStream.read(buffer[0], currentLength, availablex);
                                 currentLength += availablex;
-                                Log.e("CmdHelper-----", DataConvertUtil.byte2HexStr(buffer));
+                                Log.e("CmdHelper-----", DataConvertUtil.byte2HexStr(buffer[0]));
 
                             }
                         } catch (Exception var14) {
@@ -308,10 +305,21 @@ public class ControlManagerImplMy implements IControlManager {
                         int cursor = 0;
                         //67是十进制，转十六进制是0x43
                         //从设备下位机发送C（xmodem协议），即可开始发送更新数据
-                        if (buffer[cursor] == 67) {
-
-//                            sendUpdate();
-                            return;
+                        out1:
+                        if (SaveData.binUpdate && MainActivity.isShow) {
+                            if (buffer[0][cursor] == 67 || buffer[0][cursor + 1] == 67
+                                    || buffer[0][cursor + 2] == 67 || buffer[0][cursor + 3] == 67
+                                    || buffer[0][cursor + 4] == 67 || buffer[0][cursor + 5] == 67
+                                    || buffer[0][cursor + 6] == 67 || buffer[0][cursor + 7] == 67 || buffer[0][cursor + 8] == 67) {
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        SaveData.binUpdate = false;
+                                        sendUpdate();
+                                    }
+                                }).start();
+                                break out1;
+                            }
                         }
                         label85:
                         while (true) {
@@ -323,8 +331,8 @@ public class ControlManagerImplMy implements IControlManager {
 
 
                                 //16进制0x71~76  7E   代表
-                                if (buffer[cursor] == 113 || buffer[cursor] == 114 || buffer[cursor] == 115 || buffer[cursor] == 116 || buffer[cursor] == 117 || buffer[cursor] == 118 || buffer[cursor] == 126) {
-                                    int contentLength = CmdHelper.getInstance().parseLen(buffer, cursor);
+                                if (buffer[0][cursor] == 113 || buffer[0][cursor] == 114 || buffer[0][cursor] == 115 || buffer[0][cursor] == 116 || buffer[0][cursor] == 117 || buffer[0][cursor] == 118 || buffer[0][cursor] == 126) {
+                                    int contentLength = CmdHelper.getInstance().parseLen(buffer[0], cursor);
 
                                     // 如果内容包的长度大于最大内容长度或者小于等于0，则说明这个包有问题，丢弃
                                     if (contentLength <= 0 || contentLength > maxLength) {
@@ -339,7 +347,7 @@ public class ControlManagerImplMy implements IControlManager {
 
                                     // 一个完整包即产生
                                     byte[] realPackBytes = new byte[contentLength];
-                                    System.arraycopy(buffer, cursor, realPackBytes, 0, contentLength);
+                                    System.arraycopy(buffer[0], cursor, realPackBytes, 0, contentLength);
                                     emitter.onNext(realPackBytes);
                                     currentLength -= contentLength;
                                     cursor += contentLength;
@@ -355,7 +363,7 @@ public class ControlManagerImplMy implements IControlManager {
                         }
                         // 残留字节移到缓冲区首
                         if (currentLength > 0 && cursor > 0) {
-                            System.arraycopy(buffer, cursor, buffer, 0, currentLength);
+                            System.arraycopy(buffer[0], cursor, buffer[0], 0, currentLength);
                         }
                     }
                     SystemClock.sleep(2);
@@ -704,7 +712,7 @@ public class ControlManagerImplMy implements IControlManager {
                 this.send(this.sendBytes);
                 break;
             case 999:
-                this.sendBytes = CmdHelper.getInstance().transToRawData(this.send_serial_num, (byte) 1, 9999, "");
+                this.sendBytes = CmdHelper.getInstance().transToRawData(this.send_serial_num, cmdEntity.getBox_code(), (byte) 1, 9999, "");
                 this.send(this.sendBytes);
                 break;
         }
@@ -955,6 +963,11 @@ public class ControlManagerImplMy implements IControlManager {
                 this.handlerOtherResultToBack(messageEntity, 202);
                 break;
             }
+            //烟温探测器报警上报数据
+            case 8058: {
+                this.handlerResultToBack(messageEntity, 1, 0);
+                break;
+            }
         }
 
     }
@@ -1029,17 +1042,21 @@ public class ControlManagerImplMy implements IControlManager {
     private void handlerResultToBack(MessageEntity messageEntity, int operate_id, int status) {
         CmdResultEntity cmdResultEntity = new CmdResultEntity();
         cmdResultEntity.setBox_code(messageEntity.getBox_code());
-        Log.d("content_bytes()", messageEntity.getContent_bytes() + "");
 //        int funcCode = DataConvertUtil.bytesToIntLittle(messageEntity.getContent_bytes(), 0);
-        String name = this.transFuncCodeToName(func_code_save);
-        cmdResultEntity.setFunc_code(func_code_save);
+        String name = "";
+        if (messageEntity.getIdentify_id() == 8058) {
+            name = this.transFuncCodeToName(8058);
+            cmdResultEntity.setFunc_code(8058);
+        } else {
+            name = this.transFuncCodeToName(func_code_save);
+            cmdResultEntity.setFunc_code(func_code_save);
+        }
         cmdResultEntity.setName(name);
         cmdResultEntity.setStatus(status);
         cmdResultEntity.setValue("");
         cmdResultEntity.setOperate_id(operate_id);
 
         this.controlCallBack.onResult(this.gson.toJson(cmdResultEntity));
-
     }
 
     /**
@@ -1166,6 +1183,7 @@ public class ControlManagerImplMy implements IControlManager {
 
     /**
      * 读卡数据回调  使用中
+     *
      * @param resultBytes
      */
     private void handlerIcCardCallBack(int[] resultBytes) {

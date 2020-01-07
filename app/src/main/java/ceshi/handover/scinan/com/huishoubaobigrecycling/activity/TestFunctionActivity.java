@@ -194,6 +194,10 @@ public class TestFunctionActivity extends BaseActivity implements View.OnClickLi
                 uploadCmdToPort(4, 102, 0, "纸张距离");
                 break;
             }
+            case R.id.zwenshidu:{
+                uploadCmdToPort(4, 301, 1, "纸张温湿度");
+                break;
+            }
             case R.id.zhuishou: {
                 uploadCmdToPort(4, 302, 1, "纸张回收");
                 break;
@@ -216,6 +220,10 @@ public class TestFunctionActivity extends BaseActivity implements View.OnClickLi
             }
             case R.id.ywzhongliang: {
                 uploadCmdToPort(5, 103, 0, "衣物重量");
+                break;
+            }
+            case R.id.ywwenshidu:{
+                uploadCmdToPort(5, 301, 1, "衣物温湿度");
                 break;
             }
 

@@ -1,5 +1,7 @@
 package ceshi.handover.scinan.com.huishoubaobigrecycling.control;
 
+import android.util.Log;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.FileInputStream;
@@ -92,6 +94,8 @@ public class Xmodem {
                             // 未收到应答，错误包数+1，继续重发
                             if (data == ACK) {
 //                                number += 128;
+                                Log.d("data=ACK", ACK + "");
+
                                 break;
                             } else {
                                 ++errorCount;
@@ -107,13 +111,16 @@ public class Xmodem {
                         putData(EOT);
                         isAck = getData() == ACK;
                         SaveData.isUpdate=true;
+//                        try {
+//                            Runtime.getRuntime().exec("su -c reboot");//重启android系统
+//                        } catch (IOException e) {
+//                            e.printStackTrace();
+//                        }
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-
-            ;
         }.start();
 
     }

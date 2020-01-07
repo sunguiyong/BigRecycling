@@ -1,16 +1,9 @@
 package ceshi.handover.scinan.com.huishoubaobigrecycling.activity;
 
-import android.annotation.SuppressLint;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Color;
-import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.CountDownTimer;
-import android.os.Handler;
-import android.os.Message;
 import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.Log;
@@ -29,26 +22,18 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.google.gson.Gson;
 import com.leesche.yyyiotlib.entity.CmdResultEntity;
-import com.trello.rxlifecycle.ActivityEvent;
 
-import java.io.BufferedWriter;
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.lang.ref.WeakReference;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.R;
+import ceshi.handover.scinan.com.huishoubaobigrecycling.activity.getdata.DataFromServer;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.api.APIWrapper;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.api.net.RxHelper;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.api.net.RxSubscriber;
@@ -58,26 +43,19 @@ import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.DeviceState_Info;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.ResultBean;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.UnitPrice;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.User_info1;
-import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.pingzi_info;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.control.ControlManagerImplMy;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.entity.SaveData;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.Arith;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.BaseApplication;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.Constant;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.DialogHelper;
-import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.FileUtil;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.FileUtils;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.PakageUtil;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.SharePreferenceUtils;
-import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.TLog;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.ToastUtil;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.UiUtils;
 import cn.jpush.android.api.JPushInterface;
-import rx.Observable;
 import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
-import rx.schedulers.Schedulers;
 
 import static ceshi.handover.scinan.com.huishoubaobigrecycling.bean.ResultBean.boliH;
 import static ceshi.handover.scinan.com.huishoubaobigrecycling.bean.ResultBean.feizhiH;
@@ -160,6 +138,16 @@ public class RecoverActivity extends BaseActivity {
     boolean state = false;
     boolean state1 = false;
     boolean state2 = false;
+    @BindView(R.id.suliaostatus_tv)
+    TextView suliaostatusTv;
+    @BindView(R.id.bolistatus_tv)
+    TextView bolistatusTv;
+    @BindView(R.id.pingzistatus_tv)
+    TextView pingzistatusTv;
+    @BindView(R.id.yiwustatus_tv)
+    TextView yiwustatusTv;
+    @BindView(R.id.zhileistatus_tv)
+    TextView zhileistatusTv;
     private long sumScore;
     @BindView(R.id.xuanze_style)
     TextView xuanzeStyle;
@@ -201,6 +189,7 @@ public class RecoverActivity extends BaseActivity {
     @BindView(R.id.appversion_tv)
     TextView appversionTv;
 
+    public boolean isShow;
     private String msg;
     private String msg_pingzi;
     private Socket result;
@@ -286,6 +275,16 @@ public class RecoverActivity extends BaseActivity {
         username.setText(userName);
         getDataFromBoard();
         initUnit();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                setStatus(pingziH, pingzistatusTv);
+                setStatus(suliaoH, suliaostatusTv);
+                setStatus(boliH, bolistatusTv);
+                setStatus(feizhiH, zhileistatusTv);
+                setStatus(yiwuH, yiwustatusTv);
+            }
+        });
     }
 
     /**
@@ -304,124 +303,9 @@ public class RecoverActivity extends BaseActivity {
         uzhilei1.setText(UnitPrice.zhilei + "积分/KG");
     }
 
-    private void getDataFromBoard() {
-        /**
-         * 板子数据获取
-         */
-        ControlManagerImplMy.getInstance(this).addControlCallBack(new ControlManagerImplMy.ControlCallBack() {
-            @Override
-            public void onResult(final String result) {
-                CmdResultEntity cmdResultEntity = gson.fromJson(result, CmdResultEntity.class);
-                String value = cmdResultEntity.getValue();
-                switch (cmdResultEntity.getBox_code()) {
-                    case 1: {
-                        if (cmdResultEntity.getFunc_code() == 101 && cmdResultEntity.getValue() != null) {
-                            ResultBean.pingzi = value;
-                            pingziNum++;
-                            Log.d("瓶子个数", pingziNum + "个");
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    pingziNumber.setText(pingziNum + "个");
-                                    pingzisum.setText(pingziNum * UnitPrice.pingzi + "");//瓶子小计
-                                    if (pingzisum.getText().toString() != null) {
-                                        sumScore = Integer.parseInt(pingzisum.getText().toString());
-                                    }
-                                }
-                            });
-                        }
-                        if (cmdResultEntity.getFunc_code() == 102 && !cmdResultEntity.getValue().equals("")) {
-                            pingziH = cmdResultEntity.getValue();
-                        }
-                        break;
-                    }
-                    case 2: {
-                        if (cmdResultEntity.getFunc_code() == 103 && !cmdResultEntity.getValue().equals("")) {
-                            ResultBean.suliao = cmdResultEntity.getValue();
-                            double d = Double.parseDouble(ResultBean.suliao);
-                            Log.d("responseSuliao", Arith.div(d, 100.0, 3) + "aaa");
-                            suliaoTv.setText(Arith.div(d, 100.0, 3) + "");
-                            suliaosum.setText(Math.round(Arith.div(d, 100.0, 3) * UnitPrice.suliao) + "");
-                            if (suliaosum.getText().toString() != null) {
-                                sumScore = sumScore + Math.round(Arith.div(d, 100.0, 3) * UnitPrice.suliao);
-                            }
-                        } else {
-                            suliaoTv.setText("0");
-                        }
-                        if (cmdResultEntity.getFunc_code() == 102 && !cmdResultEntity.getValue().equals("")) {
-                            suliaoH = cmdResultEntity.getValue();
-                        }
-                        break;
-                    }
-                    case 3: {
-                        if (cmdResultEntity.getFunc_code() == 103 && !cmdResultEntity.getValue().equals("")) {
-                            ResultBean.boli = cmdResultEntity.getValue();
-                            double d = Double.parseDouble(ResultBean.boli);
-                            Log.d("responseBoli", Arith.div(d, 100.0, 3) + "aaa");
-                            boliTv.setText(Arith.div(d, 100.0, 3) + "");
-                            bolisum.setText(Math.round(Arith.div(d, 100.0, 3) * UnitPrice.boli) + "");
-                            if (bolisum.getText().toString() != null) {
-                                sumScore = sumScore + Math.round(Arith.div(d, 100.0, 3) * UnitPrice.boli);
-                            }
-                        } else {
-                            boliTv.setText("0");
-                        }
-                        if (cmdResultEntity.getFunc_code() == 102 && !cmdResultEntity.getValue().equals("")) {
-                            boliH = cmdResultEntity.getValue();
-                        }
-                        break;
-                    }
-                    case 4: {
-                        if (cmdResultEntity.getFunc_code() == 103 && cmdResultEntity.getValue().length() > 0) {
-                            ResultBean.feizhi = cmdResultEntity.getValue();
-                            double d = Double.parseDouble(ResultBean.feizhi);
-                            Log.d("responseFeizhi", Arith.div(d, 100.0, 3) + "aaa");
-                            zhileiTv.setText(Arith.div(d, 100.0, 3) + "");
-                            feizhisum.setText(Math.round(Arith.div(d, 100.0, 3) * UnitPrice.zhilei) + "");
-                            if (feizhisum.getText().toString() != null) {
-                                sumScore = sumScore + Math.round(Arith.div(d, 100.0, 3) * UnitPrice.zhilei);
-                            }
-                        } else {
-                            zhileiTv.setText("0");
-                        }
-                        if (cmdResultEntity.getFunc_code() == 102 && !cmdResultEntity.getValue().equals("")) {
-                            feizhiH = cmdResultEntity.getValue();
-                        }
-                        break;
-                    }
-                    case 5: {
-                        if (cmdResultEntity.getFunc_code() == 103 && !cmdResultEntity.getValue().equals("")) {
-                            ResultBean.yiwu = cmdResultEntity.getValue();
-                            double d = Double.parseDouble(ResultBean.yiwu);
-                            Log.d("responseYiwu", Arith.div(d, 100.0, 3) + "aaa");
-                            yiwuTv.setText(Arith.div(d, 100.0, 3) + "");
-                            yiwusum.setText(Math.round(Arith.div(d, 100.0, 3) * UnitPrice.yiwu) + "");
-                            if (yiwusum.getText().toString() != null) {
-                                sumScore = sumScore + Math.round(Arith.div(d, 100.0, 3) * UnitPrice.yiwu);
-                            }
-                        } else {
-                            yiwuTv.setText("0");
-                        }
-                        if (cmdResultEntity.getFunc_code() == 102 && !cmdResultEntity.getValue().equals("")) {
-                            yiwuH = cmdResultEntity.getValue();
-                        }
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                sumTv.setText(sumScore + "");
-            }
-
-            @Override
-            public void onIcResult(String icResult) {
-
-            }
-        });
-    }
 
     private Map<String, String> map = new HashMap<>();
-    private Map<String,String> mapH=new HashMap<>();
+    private Map<String, String> mapH = new HashMap<>();
 
     /**
      * 上传重量和积分结算数据到服务器
@@ -429,13 +313,15 @@ public class RecoverActivity extends BaseActivity {
     private void getData() {
         StringRequest stringRequest = new StringRequest(Request.Method.POST,
                 "https://weapp.iotccn.cn/garbageClassifyApi/api/device/settlement",
+//                "http://10.1.20.182:8882/garbageClassifyApi_war/api/cabin/receiveStateInfo",
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         Log.d("投递完毕", response);
                         if (response.contains("200")) {
-                            DialogHelper.stopProgressDlg();
-                            finish();
+                            getDataH();
+//                            DialogHelper.stopProgressDlg();
+//                            finish();
                         }
                     }
                 }, new Response.ErrorListener() {
@@ -472,39 +358,46 @@ public class RecoverActivity extends BaseActivity {
     /**
      * 上传距离数据到服务器
      */
-    private void getDataH(){
-        StringRequest stringRequest=new StringRequest(Request.Method.POST, "", new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-
-            }
-        }, new Response.ErrorListener() {
+    private void getDataH() {
+        StringRequest stringRequest = new StringRequest(Request.Method.POST,
+                "https://weapp.iotccn.cn/garbageClassifyApi/api/cabin/receiveStateInfo",
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.d("getDataH", "onResponse: " + response);
+                        if (response.contains("200")) {
+                            DialogHelper.stopProgressDlg();
+                            finish();
+                        }
+                    }
+                }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-
+                Log.d("getDataHError", "onErrorResponse: " + error);
             }
-        }){
+        }) {
             @Override
             protected Map<String, String> getParams() throws AuthFailureError {
                 mapH.clear();
-                mapH.put("token",ResultBean.token);
-                mapH.put("groupId","3");
-                mapH.put("deviceNumber",FileUtils.getFileContent(new File(FileUtils.filePath)));
-                mapH.put("categoryId1", pingziH);
-                mapH.put("state1", suliaoH);
-//                mapH.put("weghtQuantity1",);
-//                mapH.put("categoryId2",);
-//                mapH.put("state2",);
-//                mapH.put("weghtQuantity2",);
-//                mapH.put("categoryId3",);
-//                mapH.put("state3",);
-//                mapH.put("weghtQuantity3",);
-//                mapH.put("categoryId4",);
-//                mapH.put("state4",);
-//                mapH.put("weghtQuantity4",);
-//                mapH.put("categoryId5",);
-//                mapH.put("state5",);
-//                mapH.put("weghtQuantity5",);
+                mapH.put("token", ResultBean.token);
+                mapH.put("groupId", "3");
+                mapH.put("deviceNumber", FileUtils.getFileContent(new File(FileUtils.filePath)));
+                mapH.put("categoryId1", "1");
+                mapH.put("state1", pingziH);
+                mapH.put("weightQuantity1", "0");
+                mapH.put("categoryId2", "6");
+                mapH.put("state2", suliaoH);
+                mapH.put("weightQuantity2", "0");
+                mapH.put("categoryId3", "9");
+                mapH.put("state3", boliH);
+                mapH.put("weightQuantity3", "0");
+                mapH.put("categoryId4", "7");
+                mapH.put("state4", feizhiH);
+                mapH.put("weightQuantity4", "0");
+                mapH.put("categoryId5", "8");
+                mapH.put("state5", yiwuH);
+                mapH.put("weightQuantity5", "0");
+                Log.d("hehe", pingziH + "--" + suliaoH + "--" + boliH + "--" + feizhiH + "--" + yiwuH);
                 return mapH;
             }
         };
@@ -705,7 +598,6 @@ public class RecoverActivity extends BaseActivity {
     private boolean isChildren = true;
 
     private boolean sendData2Board() {
-
         uploadCmdToPort(2, 103, 0, "塑料称重");
         SystemClock.sleep(500);
         uploadCmdToPort(3, 103, 0, "玻璃重量");
@@ -713,6 +605,16 @@ public class RecoverActivity extends BaseActivity {
         uploadCmdToPort(4, 103, 0, "纸张重量");
         SystemClock.sleep(500);
         uploadCmdToPort(5, 103, 0, "衣物重量");
+        SystemClock.sleep(500);
+        uploadCmdToPort(1, 102, 0, "瓶子距离");
+        SystemClock.sleep(500);
+        uploadCmdToPort(2, 102, 0, "塑料距离");
+        SystemClock.sleep(500);
+        uploadCmdToPort(3, 102, 0, "玻璃距离");
+        SystemClock.sleep(500);
+        uploadCmdToPort(4, 102, 0, "纸张距离");
+        SystemClock.sleep(500);
+        uploadCmdToPort(5, 102, 0, "衣物距离");
         SystemClock.sleep(500);
         return true;
     }
@@ -877,6 +779,13 @@ public class RecoverActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        isShow = true;
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        isShow = false;
     }
 
     @Override
@@ -916,7 +825,7 @@ public class RecoverActivity extends BaseActivity {
         ControlManagerImplMy.getInstance(getApplicationContext()).sendCmdToPort(ControlManagerImplMy.RECYCLING, jsonCmd);
     }
 
-    CountDownTimer endTimer = new CountDownTimer(6 * 1000, 1000) {
+    CountDownTimer endTimer = new CountDownTimer(7 * 1000, 1000) {
         @Override
         public void onTick(long millisUntilFinished) {
 
@@ -927,4 +836,203 @@ public class RecoverActivity extends BaseActivity {
             getData();
         }
     };
+
+    /**
+     * 板子数据获取
+     */
+    private void getDataFromBoard() {
+        ControlManagerImplMy.getInstance(this).addControlCallBack(new ControlManagerImplMy.ControlCallBack() {
+            @Override
+            public void onResult(final String result) {
+                CmdResultEntity cmdResultEntity = gson.fromJson(result, CmdResultEntity.class);
+                String value = cmdResultEntity.getValue();
+                if (cmdResultEntity.getFunc_code() == 8058) {
+//                    DialogHelper.showProgressDlg(getApplicationContext(),"警告！warning！");
+                    Toast.makeText(getApplicationContext(), "异常报警" + cmdResultEntity.getBox_code(), Toast.LENGTH_SHORT).show();
+                    Log.d("烟温", "异常报警" + cmdResultEntity.getBox_code());
+                    DataFromServer.postDataWarning(3, SaveData.deviceId, cmdResultEntity.getBox_code(), new DataFromServer.StatusCallBack() {
+                        @Override
+                        public void success() {
+                            Log.d("烟温报警", "success: ");
+                            DialogHelper.showProgressDlg(getApplicationContext(), "警告！警告！");
+                        }
+
+                        @Override
+                        public void error() {
+
+                        }
+
+                        @Override
+                        public void failed() {
+
+                        }
+                    });
+                }
+                switch (cmdResultEntity.getBox_code()) {
+                    case 1: {
+                        if (cmdResultEntity.getFunc_code() == 101 && cmdResultEntity.getValue() != null) {
+                            ResultBean.pingzi = value;
+                            pingziNum++;
+                            Log.d("瓶子个数", pingziNum + "个");
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    pingziNumber.setText(pingziNum + "个");
+                                    pingzisum.setText(pingziNum * UnitPrice.pingzi + "");//瓶子小计
+                                    if (pingzisum.getText().toString() != null) {
+                                        sumScore = Integer.parseInt(pingzisum.getText().toString());
+                                    }
+                                }
+                            });
+                        }
+                        if (cmdResultEntity.getFunc_code() == 102 && !cmdResultEntity.getValue().equals("")) {
+                            pingziH = cmdResultEntity.getValue();
+                            if (Integer.parseInt(pingziH) < 20) {
+                                pingziH = "1";
+                            } else {
+                                pingziH = "0";
+                            }
+                        }
+                        break;
+                    }
+                    case 2: {
+                        if (cmdResultEntity.getFunc_code() == 103 && !cmdResultEntity.getValue().equals("")) {
+                            ResultBean.suliao = cmdResultEntity.getValue();
+                            double d = Double.parseDouble(ResultBean.suliao);
+                            Log.d("responseSuliao", Arith.div(d, 100.0, 3) + "aaa");
+                            suliaoTv.setText(Arith.div(d, 100.0, 3) + "");
+                            suliaosum.setText(Math.round(Arith.div(d, 100.0, 3) * UnitPrice.suliao) + "");
+                            if (suliaosum.getText().toString() != null) {
+                                sumScore = sumScore + Math.round(Arith.div(d, 100.0, 3) * UnitPrice.suliao);
+                            }
+                        } else if (cmdResultEntity.getFunc_code() == 103 && cmdResultEntity.getValue().length() == 0) {
+                            suliaoTv.setText("0");
+                        }
+                        if (cmdResultEntity.getFunc_code() == 102 && !cmdResultEntity.getValue().equals("")) {
+                            suliaoH = cmdResultEntity.getValue();
+                            if (Integer.parseInt(suliaoH) < 20) {
+                                suliaoH = "1";
+                            } else {
+                                suliaoH = "0";
+                            }
+                        }
+                        break;
+                    }
+                    case 3: {
+                        if (cmdResultEntity.getFunc_code() == 103 && !cmdResultEntity.getValue().equals("")) {
+                            ResultBean.boli = cmdResultEntity.getValue();
+                            double d = Double.parseDouble(ResultBean.boli);
+                            Log.d("responseBoli", Arith.div(d, 100.0, 3) + "aaa");
+                            boliTv.setText(Arith.div(d, 100.0, 3) + "");
+                            bolisum.setText(Math.round(Arith.div(d, 100.0, 3) * UnitPrice.boli) + "");
+                            if (bolisum.getText().toString() != null) {
+                                sumScore = sumScore + Math.round(Arith.div(d, 100.0, 3) * UnitPrice.boli);
+                            }
+                        } else if (cmdResultEntity.getFunc_code() == 103 && cmdResultEntity.getValue().length() == 0) {
+                            boliTv.setText("0");
+                        }
+                        if (cmdResultEntity.getFunc_code() == 102 && !cmdResultEntity.getValue().equals("")) {
+                            boliH = cmdResultEntity.getValue();
+                            if (Integer.parseInt(boliH) < 20) {
+                                boliH = "1";
+                            } else {
+                                boliH = "0";
+                            }
+                        }
+                        break;
+                    }
+                    case 4: {
+                        if (cmdResultEntity.getFunc_code() == 103 && cmdResultEntity.getValue().length() > 0) {
+                            ResultBean.feizhi = cmdResultEntity.getValue();
+                            double d = Double.parseDouble(ResultBean.feizhi);
+                            Log.d("responseFeizhi", Arith.div(d, 100.0, 3) + "aaa");
+                            zhileiTv.setText(Arith.div(d, 100.0, 3) + "");
+                            feizhisum.setText(Math.round(Arith.div(d, 100.0, 3) * UnitPrice.zhilei) + "");
+                            if (feizhisum.getText().toString() != null) {
+                                sumScore = sumScore + Math.round(Arith.div(d, 100.0, 3) * UnitPrice.zhilei);
+                            }
+                        } else if (cmdResultEntity.getFunc_code() == 103 && cmdResultEntity.getValue().length() == 0) {
+                            zhileiTv.setText("0");
+                        }
+                        if (cmdResultEntity.getFunc_code() == 102 && !cmdResultEntity.getValue().equals("")) {
+                            feizhiH = cmdResultEntity.getValue();
+                            if (Integer.parseInt(feizhiH) < 20) {
+                                feizhiH = "1";
+                            } else {
+                                feizhiH = "0";
+                            }
+                        }
+                        break;
+                    }
+                    case 5: {
+                        if (cmdResultEntity.getFunc_code() == 103 && !cmdResultEntity.getValue().equals("")) {
+                            ResultBean.yiwu = cmdResultEntity.getValue();
+                            double d = Double.parseDouble(ResultBean.yiwu);
+                            Log.d("responseYiwu", Arith.div(d, 100.0, 3) + "aaa");
+                            yiwuTv.setText(Arith.div(d, 100.0, 3) + "");
+                            yiwusum.setText(Math.round(Arith.div(d, 100.0, 3) * UnitPrice.yiwu) + "");
+                            if (yiwusum.getText().toString() != null) {
+                                sumScore = sumScore + Math.round(Arith.div(d, 100.0, 3) * UnitPrice.yiwu);
+                            }
+                        } else if (cmdResultEntity.getFunc_code() == 103 && cmdResultEntity.getValue().length() == 0) {
+                            yiwuTv.setText("0");
+                        }
+                        if (cmdResultEntity.getFunc_code() == 102 && !cmdResultEntity.getValue().equals("")) {
+                            yiwuH = cmdResultEntity.getValue();
+                            if (Integer.parseInt(yiwuH) < 20) {
+                                yiwuH = "1";
+                            } else {
+                                yiwuH = "0";
+                            }
+                        }
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                changeStatusH(pingziH);
+                changeStatusH(suliaoH);
+                changeStatusH(boliH);
+                changeStatusH(feizhiH);
+                changeStatusH(yiwuH);
+
+                if (isShow) {
+                    sumTv.setText(sumScore + "");
+                }
+            }
+
+            @Override
+            public void onIcResult(String icResult) {
+
+            }
+        });
+    }
+
+    private void changeStatusH(String distance) {
+        if (distance != null) {
+            if (Integer.parseInt(distance) < 20) {
+                distance = "1";
+            } else {
+                distance = "0";
+            }
+        } else {
+            distance = "2";
+        }
+    }
+
+    private void setStatus(String heightStatu, TextView textView) {
+        if (heightStatu != null) {
+            //判断status  0 1 2三种状态
+            if (heightStatu.equals("0")) {
+                textView.setText("未满");
+            } else if (heightStatu.equals("1")) {
+                textView.setText("已满");
+                textView.setTextColor(getResources().getColor(R.color.red));
+            } else {
+                textView.setText("异常");
+                textView.setTextColor(getResources().getColor(R.color.red));
+            }
+        }
+    }
+
 }

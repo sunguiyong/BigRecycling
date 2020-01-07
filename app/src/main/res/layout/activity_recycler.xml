@@ -152,10 +152,11 @@
                 android:orientation="vertical">
 
                 <TextView
+                    android:id="@+id/suliaostatus_tv"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center|bottom"
-                    android:text="未满" />
+                    android:text="" />
 
                 <ImageView
                     android:id="@+id/img_suliao"
@@ -173,10 +174,11 @@
                 android:orientation="vertical">
 
                 <TextView
+                    android:id="@+id/bolistatus_tv"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center|bottom"
-                    android:text="未满" />
+                    android:text="" />
 
                 <ImageView
                     android:id="@+id/img_boli"
@@ -196,10 +198,11 @@
                 android:orientation="vertical">
 
                 <TextView
+                    android:id="@+id/pingzistatus_tv"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center|bottom"
-                    android:text="未满" />
+                    android:text="" />
 
                 <ImageView
                     android:id="@+id/img_yinliao"
@@ -216,11 +219,11 @@
                 android:orientation="vertical">
 
                 <TextView
+                    android:id="@+id/yiwustatus_tv"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center|bottom"
-                    android:text="已满"
-                    android:textColor="@color/red" />
+                    android:text="" />
 
                 <ImageView
                     android:id="@+id/img_yifu"
@@ -239,10 +242,11 @@
                 android:orientation="vertical">
 
                 <TextView
+                    android:id="@+id/zhileistatus_tv"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center|bottom"
-                    android:text="未满" />
+                    android:text="" />
 
                 <ImageView
                     android:id="@+id/img_feizhi"

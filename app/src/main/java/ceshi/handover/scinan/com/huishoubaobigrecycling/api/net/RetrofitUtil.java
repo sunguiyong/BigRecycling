@@ -19,6 +19,7 @@ public class RetrofitUtil {
     private static final String API_TEST_HOST = Constant.BASEURL_IP;
     private static Retrofit mRetrofit;
     private static APIService mAPIService;
+    private static String downloadApkUrl="http://114.116.37.87:8084/garbageClassifyManageSystem/version/downLoadFile?path=C:/energySystem/tomcat-8084/webapps/garbageClassifyManageSystem/resources/testupload/1.zip";
 
     private static Retrofit getRetrofit(int state) {
         if (mRetrofit == null) {

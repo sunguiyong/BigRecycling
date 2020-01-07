@@ -230,5 +230,15 @@
         <meta-data
             android:name="JPUSH_APPKEY"
             android:value="1a862bfbbdc61969336ba14f" />
+        
+        <provider
+            android:authorities="ceshi.handover.scinan.com.huishoubaobigrecycling.fileprovider"
+            android:name="android.support.v4.content.FileProvider"
+            android:grantUriPermissions="true"
+            android:exported="false">
+<meta-data
+    android:name="android.support.FILE_PROVIDER_PATHS"
+    android:resource="@xml/file_paths"/>
+        </provider>
     </application>
 </manifest>

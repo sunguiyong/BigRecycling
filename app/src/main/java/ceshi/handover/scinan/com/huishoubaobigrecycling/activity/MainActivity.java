@@ -2,10 +2,16 @@ package ceshi.handover.scinan.com.huishoubaobigrecycling.activity;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -14,9 +20,11 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.SystemClock;
 import android.service.notification.StatusBarNotification;
+import android.support.v4.content.FileProvider;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -58,10 +66,12 @@ import java.util.concurrent.TimeUnit;
 import butterknife.BindView;
 import butterknife.OnClick;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.R;
+import ceshi.handover.scinan.com.huishoubaobigrecycling.activity.getdata.DataFromServer;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.api.APIWrapper;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.api.net.RxHelper;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.api.net.RxSubscriber;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.base.BaseActivity;
+import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.CompanyInfo;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.DeviceInfo;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.Erweima;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.LoginQRCode;
@@ -72,20 +82,24 @@ import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.UnitPrice;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.Version_Info;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.control.ControlManagerImplMy;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.entity.SaveData;
-import ceshi.handover.scinan.com.huishoubaobigrecycling.load.DownloadUtils;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.BaseApplication;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.CloseBarUtil;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.Constant;
+import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.DialogHelper;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.FileUtils;
+import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.PackageUtils;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.PakageUtil;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.QRCode;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.TLog;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.ToastUtil;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.UiUtils;
+import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.download.DownloadUtils;
+import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.download.JsDownloadListener;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.view.CyclerViewPager;
 import cn.jpush.android.api.JPushInterface;
 import pub.devrel.easypermissions.EasyPermissions;
 import rx.Observable;
+import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.schedulers.Schedulers;
@@ -105,6 +119,12 @@ public class MainActivity extends BaseActivity {
     EditText phonenumet;
     @BindView(R.id.deviceid_tv)
     TextView deviceidTv;
+    @BindView(R.id.area_tv)
+    TextView areaTv;
+    @BindView(R.id.phone_tv)
+    TextView phoneTv;
+    @BindView(R.id.companyname_tv)
+    TextView companyTv;
     Gson gson = new Gson();
     List<Lunbo.DataBean> message;
     List<Lunbo.DataBean> message_one = new ArrayList<>();
@@ -123,6 +143,8 @@ public class MainActivity extends BaseActivity {
     long[] mHits = new long[COUNTS];
     boolean icCardIsOpen = false;
     private boolean icCheck = false;
+    private String versionApk;
+    private String versionBin;
     int count = 0;
     private Handler mHandler = new Handler() {
         @Override
@@ -217,8 +239,13 @@ public class MainActivity extends BaseActivity {
                                 }
                             }
                             ResultBean.token = loginResult.getData().getUser().getToken();
-                            Intent intent = new Intent(MainActivity.this, RoleChooseActivity.class);
-                            startActivity(intent);
+                            if (loginResult.getData().getUser().getType() == 0) {
+                                startActivity(new Intent(getApplicationContext(), RecoverActivity.class));
+                            } else {
+                                Intent intent = new Intent(MainActivity.this, RoleChooseActivity.class);
+                                startActivity(intent);
+                            }
+
                         } else {
                             Log.d("IC login", "onResponse: " + response);
                             icCheck = true;
@@ -289,7 +316,7 @@ public class MainActivity extends BaseActivity {
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                Log.d("登录", "失败");
+                Log.d("登录请求", "失败");
             }
         }) {
             @Override
@@ -316,6 +343,7 @@ public class MainActivity extends BaseActivity {
         JPushInterface.setDebugMode(true);
 //        Create_File();
         // readFile();
+
         String[] perms = {Manifest.permission.CALL_PHONE,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
                 Manifest.permission.ACCESS_COARSE_LOCATION,
@@ -341,6 +369,12 @@ public class MainActivity extends BaseActivity {
                 phoneLogin(deviceId);
             }
         });
+        erweima.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+//                checkVersionApk("huishou.apk");
+            }
+        });
 
 //        tv_version.setOnLongClickListener(new View.OnLongClickListener() {
 //            @Override
@@ -361,8 +395,8 @@ public class MainActivity extends BaseActivity {
 //                        Erweima_Net();
                     }
                 });
-        LunBO(message, new MyPagerAdapter(message), viewpagerHead, "ad1,ad2,ad3");
-        LunBO(message_one, new MyPagerAdapter(message_one), viewpagerFoot, "ad4,ad5,ad6");
+//        LunBO(message, new MyPagerAdapter(message), viewpagerHead, "ad1,ad2,ad3");
+//        LunBO(message_one, new MyPagerAdapter(message_one), viewpagerFoot, "ad4,ad5,ad6");
 //        JPushInterface.setAlias(MainActivity.this, 1, Constant.MAC);
         version = PakageUtil.getAppVersion(this);
 //        Version();
@@ -374,7 +408,10 @@ public class MainActivity extends BaseActivity {
                 sRecyclingIsOpen = ControlManagerImplMy.getInstance(MainActivity.this).linkToPort(ControlManagerImplMy.RECYCLING);
                 //IC读卡器串口
                 icCardIsOpen = ControlManagerImplMy.getInstance(MainActivity.this).linkToPort(ControlManagerImplMy.IC_CARD);
-//                if(sRecyclingIsOpen){
+                String jsonCmd = ControlManagerImplMy.getInstance(MainActivity.this).testJsonCmdStr(1, 203, -1, "固件版本");
+                ControlManagerImplMy.getInstance(MainActivity.this).sendCmdToPort(ControlManagerImplMy.RECYCLING, jsonCmd);
+
+                //                if(sRecyclingIsOpen){
 //                    //获取设备编号
 //                    String jsonCmd = ControlManagerImplMy.getInstance(MainActivity.this).testJsonCmdStr(1
 //                            , 202, -1, "设备编号");
@@ -408,8 +445,8 @@ public class MainActivity extends BaseActivity {
 //                        Erweima_Net();
                     }
                 });
-        LunBO(message, new MyPagerAdapter(message), viewpagerHead, "ad1,ad2,ad3");
-        LunBO(message_one, new MyPagerAdapter(message_one), viewpagerFoot, "ad4,ad5,ad6");
+//        LunBO(message, new MyPagerAdapter(message), viewpagerHead, "ad1,ad2,ad3");
+//        LunBO(message_one, new MyPagerAdapter(message_one), viewpagerFoot, "ad4,ad5,ad6");
     }
 
     public CountDownTimer countDownTimer;
@@ -435,11 +472,10 @@ public class MainActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
         getBoardData();//底板数据
-
+        SaveData.binUpdate = false;
         isShow = true;
         icCheck = true;
 //        mHandler.postDelayed(task, 3000);//首次调用延时3秒执行
-
     }
 
     @Override
@@ -513,7 +549,7 @@ public class MainActivity extends BaseActivity {
                             String version_late = response.getMessage().getVersion();
                             String download = response.getMessage().getDownload();
                             if (!version_late.equals(version)) {
-                                DownloadUtils.get().downloadFile(download, MainActivity.this);
+//                                DownloadUtils.get().downloadFile(download, MainActivity.this);
                             }
                         } else if (status == 300) {
                             ToastUtil.showShort(response.getMessage() + "");
@@ -751,11 +787,41 @@ public class MainActivity extends BaseActivity {
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-                    } else if (msgType.equals("003") && isShow) {
+                    } else if (msgType.equals("003") && isShow) {//关闭android系统
 //                        Runtime.getRuntime().exec(new String[]{"su", "-c", "shutdown"});
                         Runtime.getRuntime().exec(new String[]{"su", "-c", "reboot -p"});
-                    } else if (msgType.equals("004") && isShow) {
+                    } else if (msgType.equals("004") && isShow) {//请求轮播图更新
                         getLunbo();
+                    } else if (msgType.equals("005")) {//apk更新
+                        checkVersionApk("huishou.apk");
+                    } else if (msgType.equals("006") && isShow) {//bin文件更新 固件更新
+                        // TODO: 2019/12/30 校验版本
+                        DialogHelper.showProgressDlg(getApplicationContext(), "固件更新中...");
+                        SaveData.binUpdate = true;
+                        new Handler().postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                checkVersionApk("STM32L073_RTT_Example.bin");
+                            }
+                        }, 1000);
+
+//                        uploadCmdToPort(1, 999, 1, "更新固件");
+                    } else if (msgType.equals("007")) {//设备首次获取公司信息
+                        final CompanyInfo companyInfo;
+                        companyInfo = gson.fromJson(msgContent, CompanyInfo.class);
+                        Log.d("companyInfo", "onReceive: " + msgType + msgContent);
+                        if (companyInfo.getNumber().equals(deviceId.trim()) && isShow) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Log.d("007", "run: ");
+                                    areaTv.setText(companyInfo.getAddress());
+                                    phoneTv.setText(companyInfo.getPhone());
+                                    companyTv.setText(companyInfo.getGroup_name());
+                                }
+                            });
+                        }
+
                     }
                     Toast.makeText(context, "myJpush success" + messge, Toast.LENGTH_SHORT).show();
                     Log.d("myJpush success", messge);
@@ -798,7 +864,12 @@ public class MainActivity extends BaseActivity {
         } else {//config.txt文件不存在
             Log.d("文件", "不存在");
             //1、发送获取类型指令到板子
-            uploadCmdToPort(1, 202, 1, "类型");
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    uploadCmdToPort(1, 202, 1, "类型");
+                }
+            }).start();
         }
     }
 
@@ -823,30 +894,28 @@ public class MainActivity extends BaseActivity {
         ControlManagerImplMy.getInstance(this).addControlCallBack(new ControlManagerImplMy.ControlCallBack() {
             @Override
             public void onResult(final String result) {
-                Log.d("类型！", result);
                 CmdResultEntity cmdResultEntity = gson.fromJson(result, CmdResultEntity.class);
-                //上报距离到服务器
-//                if (cmdResultEntity.getBox_code() == 1 && cmdResultEntity.getFunc_code() == 102) {
-//                    cmdResultEntity.getValue();
-//                    StringRequest stringRequest=new StringRequest(Request.Method.POST, Constant.uploadStatus,
-//                            new Response.Listener<String>() {
-//                                @Override
-//                                public void onResponse(String response) {
-//
-//                                }
-//                            }, new Response.ErrorListener() {
-//                        @Override
-//                        public void onErrorResponse(VolleyError error) {
-//
-//                        }
-//                    }){
-//                        @Override
-//                        protected Map<String, String> getParams() throws AuthFailureError {
-//                            map.put()
-//                            return ;
-//                        }
-//                    }
-//                }
+                if (cmdResultEntity.getFunc_code() == 8058) {
+                    Toast.makeText(getApplicationContext(), "异常报警" + cmdResultEntity.getBox_code(), Toast.LENGTH_SHORT).show();
+                    Log.d("烟温", "异常报警" + cmdResultEntity.getBox_code());
+                    DataFromServer.postDataWarning(3, deviceId, cmdResultEntity.getBox_code(), new DataFromServer.StatusCallBack() {
+                        @Override
+                        public void success() {
+                            Log.d("烟温报警", "success: ");
+//                            DialogHelper.showProgressDlg(getApplicationContext(), "警告！警告！");
+                        }
+
+                        @Override
+                        public void error() {
+
+                        }
+
+                        @Override
+                        public void failed() {
+
+                        }
+                    });
+                }
                 //判断202获取类型功能码的value值
                 if (cmdResultEntity.getFunc_code() == 202) {
                     switch (cmdResultEntity.getValue()) {
@@ -863,6 +932,10 @@ public class MainActivity extends BaseActivity {
                     //请求获取deviceId接口
                     getDeviceId(SaveData.doorType);
                 }
+                if (cmdResultEntity.getFunc_code() == 203) {
+                    Log.d("固件版本号---->", "onResult: " + cmdResultEntity.getValue());
+                }
+
             }
 
             @Override
@@ -901,7 +974,9 @@ public class MainActivity extends BaseActivity {
                         FileUtils.writeTxtToFile(deviceInfo.getData(), "/storage/sdcard0/Download", "config.txt");
                         //todo 得到deviceId之后，写入SD卡的同时，请求获取二维码的接口
                         deviceId = deviceInfo.getData();
+                        SaveData.deviceId = deviceId;
                         deviceidTv.setText("设备编号：" + deviceId);
+                        getQRCode(deviceId);
                     }
                 }, new Response.ErrorListener() {
             @Override
@@ -920,22 +995,6 @@ public class MainActivity extends BaseActivity {
         };
         stringRequest.setTag("stringRequest");
         BaseApplication.getHttpQueues().add(stringRequest);
-    }
-
-    /**
-     * 发送获取距离的指令到底板
-     */
-    private void getDataFromBoard() {
-        uploadCmdToPort(1, 102, 0, "距离");
-        SystemClock.sleep(200);
-        uploadCmdToPort(2, 102, 0, "塑料距离");
-        SystemClock.sleep(200);
-        uploadCmdToPort(3, 102, 0, "玻璃距离");
-        SystemClock.sleep(200);
-        uploadCmdToPort(4, 102, 0, "纸张距离");
-        SystemClock.sleep(200);
-        uploadCmdToPort(5, 102, 0, "衣物距离");
-
     }
 
     @OnClick({R.id.appversion_tv})
@@ -958,8 +1017,6 @@ public class MainActivity extends BaseActivity {
         if (mHits[0] >= (SystemClock.uptimeMillis() - DURATION)) {
             mHits = new long[COUNTS];//重新初始化数组
             System.exit(0);//退出APP
-
-
         }
     }
 
@@ -1003,5 +1060,109 @@ public class MainActivity extends BaseActivity {
             decorView.setSystemUiVisibility(uiOptions);
 
         }
+    }
+
+    /**
+     * 固件和apk更新使用的url
+     */
+    private String testUrl = "version/downLoadFile?path=C:/energySystem/tomcat-8084/webapps/garbageClassifyManageSystem/resources/testupload/";
+    private String baseUrl = "http://114.116.37.87:8084/garbageClassifyManageSystem/";
+
+
+    /**
+     * 下载apk或bin文件
+     * /storage/sdcard0/Download/STM32L073_RTT_Example.bin
+     */
+    private void checkVersionApk(final String name) {
+        DownloadUtils downloadUtils = new DownloadUtils(baseUrl, new JsDownloadListener() {
+            @Override
+            public void onStartDownload(long length) {
+                Log.d("onStartDownload", "onStartDownload: ");
+            }
+
+            @Override
+            public void onProgress(int progress) {
+
+            }
+
+            @Override
+            public void onFail(String errorInfo) {
+
+            }
+        });
+        downloadUtils.download(testUrl + name, new File("/storage/sdcard0/Download", name), new Subscriber() {
+            @Override
+            public void onCompleted() {
+                if (name.equals("huishou.apk")) {
+                    downSuccess();
+                } else {
+                    for (int i = 1; i <= 5; i++) {
+                        SaveData.binUpdate = true;
+                        uploadCmdToPort(i, 999, 1, "更新固件");
+                        Log.d("柜子号——》》", "run: " + i);
+                        SystemClock.sleep(1000 * 100);
+                    }
+                    DialogHelper.stopProgressDlg();
+                }
+                Toast.makeText(getApplicationContext(), "下载成功", Toast.LENGTH_LONG).show();
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                Toast.makeText(getApplicationContext(), "下载失败", Toast.LENGTH_LONG).show();
+            }
+
+            @Override
+            public void onNext(Object o) {
+                Toast.makeText(getApplicationContext(), "下载中...", Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private ProgressDialog progressDialog;
+
+    //下载apk操作
+    public void downFileDialog() {
+        progressDialog = new ProgressDialog(MainActivity.this);    //进度条，在下载的时候实时更新进度，提高用户友好度
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);//STYLE_HORIZONTAL
+        progressDialog.setTitle("正在下载");
+        progressDialog.setMessage("请稍候...");
+//        progressDialog.setProgress(0);
+        progressDialog.show();
+        Log.d("SettingActivity", "downFile: ");
+    }
+
+    public void downSuccess() {
+        if (progressDialog != null && progressDialog.isShowing()) {
+            progressDialog.dismiss();
+        }
+        android.support.v7.app.AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setIcon(android.R.drawable.ic_dialog_info);
+        builder.setTitle("下载完成");
+        builder.setMessage("请点击安装");
+        builder.setCancelable(false);
+        builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) { //android N的权限问题
+                    intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);//授权读权限
+                    Uri contentUri = FileProvider.getUriForFile(MainActivity.this, "ceshi.handover.scinan.com.huishoubaobigrecycling.fileprovider",
+                            new File("/storage/sdcard0/Download", "huishou.apk"));//注意修改
+                    intent.setDataAndType(contentUri, "application/vnd.android.package-archive");
+                } else {
+                    intent.setDataAndType(Uri.fromFile(new File("/storage/sdcard0/Download", "huishou.apk")), "application/vnd.android.package-archive");
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                }
+                startActivity(intent);
+            }
+        });
+//        builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialog, int which) {
+//            }
+//        });
+        builder.create().show();
     }
 }
