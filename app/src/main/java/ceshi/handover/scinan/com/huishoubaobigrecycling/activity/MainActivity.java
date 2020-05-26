@@ -415,8 +415,8 @@ public class MainActivity extends BaseActivity {
      * 获取轮播图
      */
     private void getLunbo() {
-        LunBO(message, new MyPagerAdapter(message), viewpagerHead);
-        LunBO(message_one, new MyPagerAdapter(message_one), viewpagerFoot);
+//        LunBO(message, new MyPagerAdapter(message), viewpagerHead);
+//        LunBO(message_one, new MyPagerAdapter(message_one), viewpagerFoot);
     }
 
     public CountDownTimer countDownTimer;
@@ -455,7 +455,7 @@ public class MainActivity extends BaseActivity {
         isShow = true;
         icCheck = true;
 
-        checkVersionApk();
+//        checkVersionApk();
     }
 
     @Override

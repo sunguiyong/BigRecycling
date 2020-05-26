@@ -47,7 +47,7 @@
                 android:focusable="false"
                 android:focusableInTouchMode="false"
                 android:hint="输入手机号登录"
-                android:text="13775452153" />
+                android:text="18201917781" />
 
             <Button
                 android:id="@+id/phonelogin_bt"

@@ -28,9 +28,7 @@ import com.google.gson.Gson;
 import com.leesche.yyyiotlib.entity.CmdResultEntity;
 
 import java.io.File;
-import java.net.Socket;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import butterknife.BindView;
@@ -42,10 +40,8 @@ import ceshi.handover.scinan.com.huishoubaobigrecycling.api.net.RxHelper;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.api.net.RxSubscriber;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.base.BaseActivity;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.BaseResult;
-import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.DeviceState_Info;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.ResultBean;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.UnitPrice;
-import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.User_info1;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.control.ControlManagerImplMy;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.entity.SaveData;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.Arith;
@@ -56,7 +52,6 @@ import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.FileUtils;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.SharePreferenceUtils;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.ToastUtil;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.UiUtils;
-import cn.jpush.android.api.JPushInterface;
 import rx.Subscription;
 
 import static ceshi.handover.scinan.com.huishoubaobigrecycling.bean.ResultBean.boliH;
@@ -79,7 +74,6 @@ public class RecoverActivity extends BaseActivity {
     Button endBt;
     @BindView(R.id.time)
     TextView time;
-
     @BindView(R.id.img_feizhi)
     ImageView imgFeizhi;
     @BindView(R.id.img_boli)
@@ -130,16 +124,11 @@ public class RecoverActivity extends BaseActivity {
     TextView zhileiTv;
     @BindView(R.id.sum_ll)
     LinearLayout sumLl;
-    boolean b_jinshu;
     boolean b_feizhi;
     boolean b_boli;
     boolean b_yinliao;
     boolean b_yifu;
-    boolean b_dianzi;
     boolean b_suliao;
-    boolean state = false;
-    boolean state1 = false;
-    boolean state2 = false;
     @BindView(R.id.suliaostatus_tv)
     TextView suliaostatusTv;
     @BindView(R.id.bolistatus_tv)
@@ -150,10 +139,9 @@ public class RecoverActivity extends BaseActivity {
     TextView yiwustatusTv;
     @BindView(R.id.zhileistatus_tv)
     TextView zhileistatusTv;
-    private long sumScore;
+    private long sumScore = 0L;
     @BindView(R.id.xuanze_style)
     TextView xuanzeStyle;
-
     @BindView(R.id.version1)
     TextView version1;
     @BindView(R.id.upingzi)
@@ -190,7 +178,6 @@ public class RecoverActivity extends BaseActivity {
     TextView deviceIdTv;
     @BindView(R.id.appversion_tv)
     TextView appversionTv;
-
     @BindView(R.id.area_tv)
     TextView areaTv;
     @BindView(R.id.phone_tv)
@@ -209,6 +196,10 @@ public class RecoverActivity extends BaseActivity {
     private int pingziNum = 0;
     private Gson gson = new Gson();
     private boolean isTimeStart = true;
+    private String deviceNum;
+
+    private int flag = 0;
+    private double d1, d2, d3, d4;
 
     @Override
     public int layoutView() {
@@ -219,63 +210,13 @@ public class RecoverActivity extends BaseActivity {
     public void initview(Bundle savedInstanceState) {
         super.initview(savedInstanceState);
         hideBottomUIMenu();
-        Log.d("塑料的textview--", TextUtils.isEmpty(suliaoTv.getText().toString()) ? "" : "不空");
-//        sRecyclingIsOpen = ControlManagerImplMy.getInstance(RecoverActivity.this).linkToPort(ControlManagerImplMy.RECYCLING);
-        deviceIdTv.setText("设备编号：" + FileUtils.getFileContent(new File(FileUtils.filePath)));
-
-        timecount = new TimeCount(180000, 1000);
+        //获取设备编号
+        String str = FileUtils.getFileContent(new File(FileUtils.filePath)).trim();
+        deviceNum = str.substring(0, str.indexOf("@"));
+        deviceIdTv.setText("设备编号：" + deviceNum);
+        timecount = new TimeCount(180 * 1000, 1000);
         timecount.start();
-//        Info();
-//        startmusic();
-      /*  version.setText("版本:v"+dianshi_version);
-        version.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                finish();
-                return true;
-            }
-        });*/
-//        IntentFilter filter = new IntentFilter();
-//        filter.addAction(ACTION_UPDATEUI);
-//        broadcastReceiver = new UpdateUIBroadcastReceiver();
-//        registerReceiver(broadcastReceiver, filter);
-//        IntentFilter filter1 = new IntentFilter();
-//        filter1.addAction(ACTION_BACK);
-//        backReceiver = new BackBroadcastReceiver();
-//        registerReceiver(backReceiver, filter1);
         String userName = SharePreferenceUtils.getUserName(UiUtils.getContext());
-        recovery_one = getIntent().getStringExtra("RECOVERY");
-//        if (recovery_one != null) {
-//        } else {
-//            APIWrapper.getInstance().querInitializ("Bearer " + token, Constant.MAC)
-//                    .compose(new RxHelper<BaseResult>("正在加载，请稍候").io_no_main(RecoverActivity.this))
-//                    .subscribe(new RxSubscriber<BaseResult>() {
-//                        @Override
-//                        public void _onNext(BaseResult response) {
-//                            int status = response.getStatus();
-//                            if (status == 200) {
-////                                TLog.log("hehehe");
-//                            } else if (status == 300) {
-////                                ToastUtil.showShort(response.getMessage() + "");
-//                            }
-//                        }
-//
-//                        @Override
-//                        public void _onError(String msg) {
-////                            TLog.log(msg + "");
-//                        }
-//                    });
-//        }
-//        onSubscribe = Observable.interval(0, 3, TimeUnit.SECONDS)
-//                .subscribeOn(Schedulers.io())
-//                .compose(this.<Long>bindUntilEvent(ActivityEvent.STOP))   //当Activity执行Onstop()方法是解除订阅关系
-//                .observeOn(AndroidSchedulers.mainThread())
-//                .subscribe(new Action1<Long>() {
-//                    @Override
-//                    public void call(Long aLong) {
-//                        DeviceStates_Net(Constant.MAC);
-//                    }
-//                });
         username.setText(userName);
         getDataFromBoard();
         initUnit();
@@ -312,7 +253,6 @@ public class RecoverActivity extends BaseActivity {
         uzhilei1.setText(UnitPrice.zhilei + "积分/KG");
     }
 
-
     private Map<String, String> map = new HashMap<>();
     private Map<String, String> mapH = new HashMap<>();
 
@@ -329,8 +269,6 @@ public class RecoverActivity extends BaseActivity {
                         Log.d("投递完毕", response);
                         if (response.contains("200")) {
                             getDataH();
-//                            DialogHelper.stopProgressDlg();
-//                            finish();
                         }
                     }
                 }, new Response.ErrorListener() {
@@ -344,7 +282,7 @@ public class RecoverActivity extends BaseActivity {
                 map.clear();
                 map.put("token", ResultBean.token);
                 map.put("groupId", preferences.getString("group_id", ""));
-                map.put("deviceNumber", SaveData.deviceId);
+                map.put("deviceNumber", deviceNum);
                 map.put("c1", pingziNum + "");
                 map.put("p1", pingziNum * 10 + "");
                 map.put("c2", suliaoTv.getText().toString());
@@ -389,7 +327,7 @@ public class RecoverActivity extends BaseActivity {
                 mapH.clear();
                 mapH.put("token", ResultBean.token);
                 mapH.put("groupId", preferences.getString("group_id", ""));
-                mapH.put("deviceNumber", SaveData.deviceId);
+                mapH.put("deviceNumber", deviceNum);
                 mapH.put("categoryId1", "1");
                 mapH.put("state1", pingziH);//0  1
                 mapH.put("weightQuantity1", "0");
@@ -468,7 +406,7 @@ public class RecoverActivity extends BaseActivity {
             tableLayout.setVisibility(View.VISIBLE);
             sumLl.setVisibility(View.VISIBLE);
             endBt.setVisibility(View.INVISIBLE);
-            goonBt.setVisibility(View.VISIBLE);
+            goonBt.setVisibility(View.INVISIBLE);
             backBt.setVisibility(View.VISIBLE);
         }
     }
@@ -503,7 +441,21 @@ public class RecoverActivity extends BaseActivity {
     private boolean isOpen_suliao = false;
     private boolean isChildren = true;
 
+    private void getBoxWeight() {
+        flag = 0;
+        //称重指令
+        uploadCmdToPort(2, 103, 0, "塑料称重");
+        SystemClock.sleep(300);
+        uploadCmdToPort(3, 103, 0, "玻璃重量");
+        SystemClock.sleep(300);
+        uploadCmdToPort(4, 103, 0, "纸张重量");
+        SystemClock.sleep(300);
+        uploadCmdToPort(5, 103, 0, "衣物重量");
+        SystemClock.sleep(300);
+    }
+
     private boolean sendData2Board() {
+        flag = 1;
         //称重指令
         uploadCmdToPort(2, 103, 0, "塑料称重");
         SystemClock.sleep(300);
@@ -537,7 +489,9 @@ public class RecoverActivity extends BaseActivity {
         return true;
     }
 
-    @OnClick({R.id.back_bt, R.id.goon_bt, R.id.end_bt, R.id.children_bt, R.id.username, R.id.img_feizhi, R.id.img_boli, R.id.img_yinliao, R.id.img_yifu, R.id.img_suliao, R.id.lin_number, R.id.submit})
+    @OnClick({R.id.back_bt, R.id.goon_bt, R.id.end_bt, R.id.children_bt, R.id.username,
+            R.id.img_feizhi, R.id.img_boli, R.id.img_yinliao, R.id.img_yifu, R.id.img_suliao,
+            R.id.lin_number, R.id.submit})
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.goon_bt://继续投放
@@ -597,17 +551,13 @@ public class RecoverActivity extends BaseActivity {
                 if (b_feizhi == false) {
                     uploadCmdToPort(4, 1, 1, "纸类开门");
                     imgFeizhi.setClickable(false);
-//                    startmusicopen();
                     b_feizhi = true;
                     feizhi_boolean = true;
-//                    imgFeizhi.setImageResource(R.mipmap.select_feizhi);
                     xuanzeStyle.setVisibility(View.INVISIBLE);
                     tvTixing.setVisibility(View.INVISIBLE);
                     submit.setText("结算");
                     linFeizhi.setVisibility(View.VISIBLE);
-                    Open_Barn("PAPER");
-//                    timecount.cancel();
-//                    timecount.start();
+
                 } else {
                     uploadCmdToPort(4, 1004, 0, "纸张关门");
                     b_feizhi = false;
@@ -619,10 +569,8 @@ public class RecoverActivity extends BaseActivity {
                     uploadCmdToPort(3, 1, 1, "玻璃开门");
                     imgBoli.setClickable(false);
                     b_boli = true;
-//                    imgBoli.setImageResource(R.mipmap.select_boli);
                     tvTixing.setVisibility(View.INVISIBLE);
                     submit.setText("结算");
-                    Open_Barn("GLASS");
                 } else {
                     uploadCmdToPort(3, 1003, 0, "玻璃关门");
                     b_boli = false;
@@ -630,7 +578,6 @@ public class RecoverActivity extends BaseActivity {
                 }
                 break;
             case R.id.img_yinliao:
-//                if (b_yinliao == false) {
                 if (isOpen == false) {
                     uploadCmdToPort(1, 302, 1, "瓶子回收开");
                     SystemClock.sleep(200);
@@ -639,15 +586,10 @@ public class RecoverActivity extends BaseActivity {
                     isOpen = true;
                     yinliao_boolean = false;//
                     b_yinliao = false;//
-//                    startmusicopen();
-//                    imgYinliao.setImageResource(R.mipmap.select_yinliao);
                     xuanzeStyle.setVisibility(View.INVISIBLE);
                     tvTixing.setVisibility(View.INVISIBLE);
                     submit.setText("结算");
                     linPingzi.setVisibility(View.VISIBLE);
-//                    Open_Barn("BOTTLE");
-//                    timecount.cancel();
-//                    timecount.start();
                 } else {
                     b_yinliao = false;
                     imgYinliao.setImageResource(R.mipmap.yinliao);
@@ -659,11 +601,9 @@ public class RecoverActivity extends BaseActivity {
                     uploadCmdToPort(5, 1, 1, "衣服开门");
                     imgYifu.setClickable(false);
                     b_yifu = true;
-//                    imgYifu.setImageResource(R.mipmap.select_yifu);
                     xuanzeStyle.setVisibility(View.INVISIBLE);
                     tvTixing.setVisibility(View.INVISIBLE);
                     submit.setText("结算");
-                    Open_Barn("CLOTHES");
                 } else {
                     b_yifu = false;
                     uploadCmdToPort(5, 1005, 0, "衣服关门");
@@ -672,17 +612,14 @@ public class RecoverActivity extends BaseActivity {
                 break;
 
             case R.id.img_suliao:
-//                if (b_suliao == false) {
                 if (isOpen_suliao == false) {
                     uploadCmdToPort(2, 1, 1, "塑料开门");
                     imgSuliao.setClickable(false);
                     isOpen_suliao = true;
                     b_suliao = true;
-//                    imgSuliao.setImageResource(R.mipmap.select_suliao);
                     xuanzeStyle.setVisibility(View.INVISIBLE);
                     tvTixing.setVisibility(View.INVISIBLE);
                     submit.setText("结算");
-                    Open_Barn("PLASTIC");
                 } else {
                     b_suliao = false;
                     imgSuliao.setImageResource(R.mipmap.suliao);
@@ -706,6 +643,7 @@ public class RecoverActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
         isShow = true;
+        getBoxWeight();
     }
 
     @Override
@@ -751,6 +689,9 @@ public class RecoverActivity extends BaseActivity {
         ControlManagerImplMy.getInstance(getApplicationContext()).sendCmdToPort(ControlManagerImplMy.RECYCLING, jsonCmd);
     }
 
+    /**
+     * 点击结算开始倒计时，发送数据给板子和服务器
+     */
     CountDownTimer endTimer = new CountDownTimer(7 * 1000, 1000) {
         @Override
         public void onTick(long millisUntilFinished) {
@@ -773,14 +714,14 @@ public class RecoverActivity extends BaseActivity {
                 CmdResultEntity cmdResultEntity = gson.fromJson(result, CmdResultEntity.class);
                 String value = cmdResultEntity.getValue();
                 if (cmdResultEntity.getFunc_code() == 8058) {
-//                    DialogHelper.showProgressDlg(getApplicationContext(),"警告！warning！");
+//                    DialogHelper.showProgressDlg1(getApplicationContext(),"警告！warning！");
                     Toast.makeText(getApplicationContext(), "异常报警" + cmdResultEntity.getBox_code(), Toast.LENGTH_SHORT).show();
                     Log.d("烟温", "异常报警" + cmdResultEntity.getBox_code());
                     DataFromServer.postDataWarning(Integer.parseInt(preferences.getString("group_id", "")), SaveData.deviceId, cmdResultEntity.getBox_code(), new DataFromServer.StatusCallBack() {
                         @Override
                         public void success() {
                             Log.d("烟温报警", "success: ");
-                            DialogHelper.showProgressDlg(getApplicationContext(), "警告！警告！");
+                            DialogHelper.showProgressDlg1(getApplicationContext(), "警告！警告！");
                         }
 
                         @Override
@@ -829,14 +770,20 @@ public class RecoverActivity extends BaseActivity {
                             imgSuliao.setImageResource(R.mipmap.select_suliao);
                         }
                         if (cmdResultEntity.getFunc_code() == 103 && !cmdResultEntity.getValue().equals("")) {
+                            if (flag == 0) {
+                                ResultBean.suliao = cmdResultEntity.getValue();
+                                d1 = Double.parseDouble(ResultBean.suliao);
+                            }
+
                             ResultBean.suliao = cmdResultEntity.getValue();
                             double d = Double.parseDouble(ResultBean.suliao);
-                            Log.d("responseSuliao", Arith.div(d, 100.0, 3) + "aaa");
-                            suliaoTv.setText(Arith.div(d, 100.0, 3) + "");
-                            suliaosum.setText(Math.round(Arith.div(d, 100.0, 3) * UnitPrice.suliao) + "");
+                            suliaoTv.setText(Arith.div(d - d1, 100.0, 3) + "");//数量
+                            suliaosum.setText(Math.round(Arith.div(d - d1, 100.0, 3) * UnitPrice.suliao) + "");//积分
                             if (suliaosum.getText().toString() != null) {
-                                sumScore = sumScore + Math.round(Arith.div(d, 100.0, 3) * UnitPrice.suliao);
+                                sumScore = sumScore + Math.round(Arith.div(d - d1, 100.0, 3) * UnitPrice.suliao);
                             }
+                            Log.d(TAG, "onResult: " + d);
+                            Log.d(TAG, "onResult: " + d1);
                         } else if (cmdResultEntity.getFunc_code() == 103 && cmdResultEntity.getValue().length() == 0) {
                             suliaoTv.setText("0");
                         }
@@ -855,13 +802,17 @@ public class RecoverActivity extends BaseActivity {
                             imgBoli.setImageResource(R.mipmap.select_boli);
                         }
                         if (cmdResultEntity.getFunc_code() == 103 && !cmdResultEntity.getValue().equals("")) {
+                            if (flag == 0) {
+                                ResultBean.boli = cmdResultEntity.getValue();
+                                d2 = Double.parseDouble(ResultBean.boli);
+                            }
                             ResultBean.boli = cmdResultEntity.getValue();
                             double d = Double.parseDouble(ResultBean.boli);
                             Log.d("responseBoli", Arith.div(d, 100.0, 3) + "aaa");
-                            boliTv.setText(Arith.div(d, 100.0, 3) + "");
-                            bolisum.setText(Math.round(Arith.div(d, 100.0, 3) * UnitPrice.boli) + "");
+                            boliTv.setText(Arith.div(d - d2, 100.0, 3) + "");
+                            bolisum.setText(Math.round(Arith.div(d - d2, 100.0, 3) * UnitPrice.boli) + "");
                             if (bolisum.getText().toString() != null) {
-                                sumScore = sumScore + Math.round(Arith.div(d, 100.0, 3) * UnitPrice.boli);
+                                sumScore = sumScore + Math.round(Arith.div(d - d2, 100.0, 3) * UnitPrice.boli);
                             }
                         } else if (cmdResultEntity.getFunc_code() == 103 && cmdResultEntity.getValue().length() == 0) {
                             boliTv.setText("0");
@@ -881,11 +832,15 @@ public class RecoverActivity extends BaseActivity {
                             imgFeizhi.setImageResource(R.mipmap.select_feizhi);
                         }
                         if (cmdResultEntity.getFunc_code() == 103 && cmdResultEntity.getValue().length() > 0) {
+                            if (flag == 0) {
+                                ResultBean.feizhi = cmdResultEntity.getValue();
+                                d3 = Double.parseDouble(ResultBean.feizhi);
+                            }
                             ResultBean.feizhi = cmdResultEntity.getValue();
                             double d = Double.parseDouble(ResultBean.feizhi);
-                            Log.d("responseFeizhi", Arith.div(d, 100.0, 3) + "aaa");
-                            zhileiTv.setText(Arith.div(d, 100.0, 3) + "");
-                            feizhisum.setText(Math.round(Arith.div(d, 100.0, 3) * UnitPrice.zhilei) + "");
+                            Log.d("responseFeizhi", Arith.div(d - d3, 100.0, 3) + "aaa");
+                            zhileiTv.setText(Arith.div(d - d3, 100.0, 3) + "");
+                            feizhisum.setText(Math.round(Arith.div(d - d3, 100.0, 3) * UnitPrice.zhilei) + "");
                             if (feizhisum.getText().toString() != null) {
                                 sumScore = sumScore + Math.round(Arith.div(d, 100.0, 3) * UnitPrice.zhilei);
                             }
@@ -907,11 +862,15 @@ public class RecoverActivity extends BaseActivity {
                             imgYifu.setImageResource(R.mipmap.select_yifu);
                         }
                         if (cmdResultEntity.getFunc_code() == 103 && !cmdResultEntity.getValue().equals("")) {
+                            if (flag == 0) {
+                                ResultBean.yiwu = cmdResultEntity.getValue();
+                                d4 = Double.parseDouble(ResultBean.yiwu);
+                            }
                             ResultBean.yiwu = cmdResultEntity.getValue();
                             double d = Double.parseDouble(ResultBean.yiwu);
-                            Log.d("responseYiwu", Arith.div(d, 100.0, 3) + "aaa");
-                            yiwuTv.setText(Arith.div(d, 100.0, 3) + "");
-                            yiwusum.setText(Math.round(Arith.div(d, 100.0, 3) * UnitPrice.yiwu) + "");
+                            Log.d("responseYiwu", Arith.div(d - d4, 100.0, 3) + "aaa");
+                            yiwuTv.setText(Arith.div(d - d4, 100.0, 3) + "");
+                            yiwusum.setText(Math.round(Arith.div(d - d4, 100.0, 3) * UnitPrice.yiwu) + "");
                             if (yiwusum.getText().toString() != null) {
                                 sumScore = sumScore + Math.round(Arith.div(d, 100.0, 3) * UnitPrice.yiwu);
                             }
@@ -949,6 +908,8 @@ public class RecoverActivity extends BaseActivity {
         });
     }
 
+    private static final String TAG = "RecoverActivity";
+
     private void changeStatusH(String distance) {
         if (distance != null) {
             if (Integer.parseInt(distance) < 20) {
@@ -976,6 +937,9 @@ public class RecoverActivity extends BaseActivity {
         }
     }
 
+    /**
+     * 隐藏虚拟按键
+     */
     protected void hideBottomUIMenu() {
         //隐藏虚拟按键，并且全屏
         if (Build.VERSION.SDK_INT > 11 && Build.VERSION.SDK_INT < 19) { // lower api
