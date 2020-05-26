@@ -1,5 +1,6 @@
 package ceshi.handover.scinan.com.huishoubaobigrecycling.activity;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -13,7 +14,6 @@ import com.google.gson.Gson;
 import com.leesche.yyyiotlib.entity.CmdResultEntity;
 
 import butterknife.BindView;
-import butterknife.ButterKnife;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.R;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.activity.getdata.DataFromServer;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.base.BaseActivity;
@@ -70,6 +70,14 @@ public class RecycleActivity extends BaseActivity implements View.OnClickListene
     TextView yiwustatusTv;
     @BindView(R.id.zhileistatus_tv)
     TextView zhileistatusTv;
+
+    @BindView(R.id.area_tv)
+    TextView areaTv;
+    @BindView(R.id.phone_tv)
+    TextView phoneTv;
+    @BindView(R.id.companyname_tv)
+    TextView companyTv;
+    SharedPreferences preferences;
     private Gson gson;
 
     @Override
@@ -89,6 +97,11 @@ public class RecycleActivity extends BaseActivity implements View.OnClickListene
                 setStatus(yiwuH, yiwustatusTv);
             }
         });
+
+        preferences = getSharedPreferences("info", MODE_PRIVATE);
+        companyTv.setText("公司：" + preferences.getString("group_name", ""));
+        phoneTv.setText("电话：" + preferences.getString("phone", ""));
+        areaTv.setText("地址：" + preferences.getString("address", ""));
     }
 
     @Override
@@ -164,7 +177,7 @@ public class RecycleActivity extends BaseActivity implements View.OnClickListene
 //                    DialogHelper.showProgressDlg(getApplicationContext(),"警告！warning！");
                     Toast.makeText(getApplicationContext(), "异常报警" + cmdResultEntity.getBox_code(), Toast.LENGTH_SHORT).show();
                     Log.d("烟温", "异常报警" + cmdResultEntity.getBox_code());
-                    DataFromServer.postDataWarning(3, SaveData.deviceId, cmdResultEntity.getBox_code(), new DataFromServer.StatusCallBack() {
+                    DataFromServer.postDataWarning(Integer.parseInt(preferences.getString("group_id", "")), SaveData.deviceId, cmdResultEntity.getBox_code(), new DataFromServer.StatusCallBack() {
                         @Override
                         public void success() {
                             Log.d("烟温报警", "success: ");

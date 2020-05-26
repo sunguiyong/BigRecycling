@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
+    android:horizontalGap="1px"
+    android:keyWidth="25%p"
+    android:keyHeight="60dp"
+    >
+<!--    android:verticalGap="1px"-->
+
+    <!--  keyLabel  按键显示的内容
+    keyIcon  按键显示的图标内容
+    keyWidth	按键的宽度
+    keyHeight	按键的高度
+    horizontalGap	代表按键前的间隙水平方向上的
+    isSticky	按键是否是sticky的，就像shift 键 具有两种状态
+    isModifier	按键是不是功能键
+    keyOutputText	指定按键输出的内容是字符串
+    isRepeatable	按键是可重复的，如果长按键可以触发重复按键事件则为true，else为false
+    keyEdgeFlags	指定按键的对齐指令，取值为left或者right
+    -->
+    <Row>
+        <Key
+            android:codes="49"
+            android:keyIcon="@color/white"
+            android:keyLabel="1" />
+        <Key
+            android:codes="50"
+            android:keyLabel="2" />
+        <Key
+            android:codes="51"
+            android:keyLabel="3" />
+<!--        <Key-->
+<!--            android:codes="-3"-->
+<!--            android:keyEdgeFlags="right"-->
+<!--            android:keyLabel="取消" />-->
+
+    </Row>
+
+    <Row>
+        <Key
+            android:codes="52"
+            android:keyLabel="4" />
+        <Key
+            android:codes="53"
+            android:keyLabel="5" />
+        <Key
+            android:codes="54"
+            android:keyLabel="6" />
+        <!--        <Key-->
+        <!--            android:codes="-4"-->
+        <!--            android:keyHeight="150dp"-->
+        <!--            android:keyLabel="完成" />-->
+    </Row>
+
+    <Row>
+        <Key
+            android:codes="55"
+            android:keyLabel="7" />
+        <Key
+            android:codes="56"
+            android:keyLabel="8" />
+        <Key
+            android:codes="57"
+            android:keyLabel="9" />
+    </Row>
+    <Row>
+        <Key
+            android:codes="-10"
+            android:keyLabel="清除" />
+        <Key
+            android:codes="48"
+            android:keyLabel="0" /><!--android:keyWidth="50.2%p"-->
+        <Key
+            android:codes="-5"
+            android:keyLabel="后退" />
+    </Row>
+</Keyboard>

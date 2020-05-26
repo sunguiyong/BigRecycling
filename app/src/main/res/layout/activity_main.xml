@@ -14,16 +14,18 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginLeft="@dimen/dp_10"
-        android:layout_marginTop="@dimen/dp_10"
-        android:layout_marginRight="@dimen/dp_10"
         android:layout_weight="1.7">
 
         <ceshi.handover.scinan.com.huishoubaobigrecycling.view.CyclerViewPager
             android:id="@+id/viewpager_head"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:background="@color/white">
+
+        </ceshi.handover.scinan.com.huishoubaobigrecycling.view.CyclerViewPager>
     </LinearLayout>
+
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -42,8 +44,10 @@
                 android:id="@+id/phonenum_et"
                 android:layout_width="140dp"
                 android:layout_height="60dp"
+                android:focusable="false"
+                android:focusableInTouchMode="false"
                 android:hint="输入手机号登录"
-                android:text="17701540105" />
+                android:text="13775452153" />
 
             <Button
                 android:id="@+id/phonelogin_bt"
@@ -51,21 +55,19 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:text="登录" />
-            <!--<ImageView-->
-            <!--android:id="@+id/face"-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:src="@mipmap/face" />-->
 
-            <!--<TextView-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:layout_marginTop="10dp"-->
-            <!--android:text="人脸识别登录"-->
-            <!--android:textColor="#000000"-->
-            <!--android:textSize="13sp" />-->
         </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/keyboard"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:visibility="visible">
+
+            <include layout="@layout/layout_keyboard" />
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="0dp"
@@ -98,8 +100,6 @@
             android:id="@+id/viewpager_foot"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginLeft="@dimen/dp_10"
-            android:layout_marginRight="@dimen/dp_10"
-            android:layout_marginBottom="@dimen/dp_10" />
+            android:background="@color/white" />
     </LinearLayout>
 </LinearLayout>

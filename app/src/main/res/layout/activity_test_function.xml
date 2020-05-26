@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:gravity="center_horizontal"
     tools:context=".activity.TestFunctionActivity">
 
     <LinearLayout
@@ -21,11 +22,10 @@
         android:gravity="center" />
 
     <TableLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:paddingTop="50dp">
-
-        <TableRow>
+        <TableRow android:layout_gravity="">
 
             <Button
                 android:id="@+id/suliaoopen"
@@ -86,10 +86,10 @@
             <Button
                 android:id="@+id/ylopen"
                 android:text="饮料投递门开" />
-
             <Button
-                android:id="@+id/ylclose"
-                android:text="饮料投递门关" />
+                android:visibility="invisible"
+                android:id="@+id/aaa"
+                android:text="回收门" />
 
             <Button
                 android:id="@+id/ylhuishou"
@@ -168,9 +168,7 @@
 
         <TableRow>
 
-            <Button
-                android:id="@+id/reset"
-                android:text="复位" />
+
 
             <Button
                 android:id="@+id/systemrestart"
@@ -196,5 +194,19 @@
                 android:id="@+id/neidengclose"
                 android:text="内灯关" />
         </TableRow>
+        <TableRow>
+            <Button
+                android:id="@+id/reset"
+                android:text="复位" />
+        </TableRow>
     </TableLayout>
+    <Button
+        android:layout_marginTop="80dp"
+        android:layout_gravity="center_horizontal"
+        android:id="@+id/end_bt"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="结束"/>
 </LinearLayout>

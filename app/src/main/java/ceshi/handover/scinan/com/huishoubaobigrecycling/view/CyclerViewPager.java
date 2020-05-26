@@ -1,14 +1,19 @@
 package ceshi.handover.scinan.com.huishoubaobigrecycling.view;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
+
+import ceshi.handover.scinan.com.huishoubaobigrecycling.entity.SaveData;
 
 /**
  * Created by wangx on 2016/7/9.
@@ -42,7 +47,7 @@ public class CyclerViewPager extends ViewPager {
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
         //手指触摸  按下 停止轮播  抬起继续轮播
-        switch (ev.getAction()){
+        switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 stopScroll();
                 break;
@@ -57,23 +62,37 @@ public class CyclerViewPager extends ViewPager {
         return super.onTouchEvent(ev);
     }
 
-    Handler handler = new Handler(){
+    @SuppressLint("HandlerLeak")
+    Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             int currentItem = getCurrentItem();
-            currentItem ++;
-            setCurrentItem(currentItem);
-            handler.sendEmptyMessageDelayed(1, 4000);//4s发送消息
+            int time = 0;
+            if (SaveData.timeList != null) {
+                if (currentItem - SaveData.timeList.size() == 0) {
+                    time = SaveData.timeList.get(SaveData.timeList.size() - 1) * 1000;
+                    Log.d("handleMessage", "handleMessage: " + time);
+                    currentItem = 0;
+                } else {
+                    time = SaveData.timeList.get(currentItem) * 1000;
+                }
+                currentItem++;
+                setCurrentItem(currentItem);
+                handler.sendEmptyMessageDelayed(1, time);//4s发送消息
+            }
         }
     };
 
     public void startScroll() {
-        //开启轮播
-        handler.sendEmptyMessageDelayed(1, 4000);//4s发送消息
+        if (SaveData.timeList != null) {
+            //开启轮播
+            handler.sendEmptyMessageDelayed(1, SaveData.timeList.get(0) * 1000);//4s发送消息
+        }
+
     }
 
-    public void stopScroll(){
+    public void stopScroll() {
         handler.removeMessages(1);
     }
 
@@ -84,7 +103,6 @@ public class CyclerViewPager extends ViewPager {
         private int position;
 
         public MyPageChangeListener(OnPageChangeListener listener) {
-
             this.listener = listener;
         }
 
@@ -101,10 +119,14 @@ public class CyclerViewPager extends ViewPager {
                 listener.onPageSelected(position);
         }
 
+        /**
+         *
+         * @param state
+         */
         @Override
         public void onPageScrollStateChanged(int state) {
             //状态改变的时候 调用    手指抬起的时候切换
-            if (state == ViewPager.SCROLL_STATE_IDLE) {
+            if (state == ViewPager.SCROLL_STATE_IDLE) {//无动作，初始状态
                 //空闲切换
                 // 页面切换   自动的切换到对应的界面    最后一个A----->第一个A
                 if (position == getAdapter().getCount() - 1) {
@@ -125,7 +147,6 @@ public class CyclerViewPager extends ViewPager {
         private PagerAdapter adapter;
 
         public MyAdapter(PagerAdapter adapter) {
-
             this.adapter = adapter;  //[ABCD]
         }
 

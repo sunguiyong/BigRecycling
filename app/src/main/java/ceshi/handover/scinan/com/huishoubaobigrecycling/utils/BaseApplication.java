@@ -31,10 +31,9 @@ public class BaseApplication extends Application {
     public void onCreate() {
         super.onCreate();
         instance = this;
-        JPushInterface.init(this);
-        JPushInterface.setDebugMode(true);    // 设置开启日志,发布时请关闭日志
+//        JPushInterface.init(this);
+//        JPushInterface.setDebugMode(true);    // 设置开启日志,发布时请关闭日志
         queues = Volley.newRequestQueue(getApplicationContext(), (HttpStack) null);
-
     }
 
     public RequestQueue getRequestQueue() {
@@ -50,9 +49,9 @@ public class BaseApplication extends Application {
     }
 
 
-    @Override
-    protected void attachBaseContext(Context base) {
-        super.attachBaseContext(base);
-        MultiDex.install(this);
-    }
+//    @Override
+//    protected void attachBaseContext(Context base) {
+//        super.attachBaseContext(base);
+//        MultiDex.install(this);
+//    }
 }

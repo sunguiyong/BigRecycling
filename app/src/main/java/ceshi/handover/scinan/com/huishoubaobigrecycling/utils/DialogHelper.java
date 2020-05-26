@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -96,11 +97,34 @@ public class DialogHelper {
             progressDlg = new ProgressDialog(ctx);
             //设置进度条样式
             progressDlg.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+//            progressDlg.getWindow().setTitle(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
             //提示的消息
             progressDlg.setMessage(strMessage);
             progressDlg.setIndeterminate(false);
             progressDlg.setCancelable(true);
             progressDlg.setCanceledOnTouchOutside(false);
+            progressDlg.show();
+        }
+    }
+
+    /**
+     * 增加dialog
+     *
+     * @param ctx
+     */
+    public static void showProgressDlg1(Context ctx, String strMessage) {
+
+        if (null == progressDlg) {
+            if (ctx == null) return;
+            progressDlg = new ProgressDialog(ctx);
+            //设置进度条样式
+//            progressDlg.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            //提示的消息
+            progressDlg.setMessage(strMessage);
+//            progressDlg.setIndeterminate(false);
+//            progressDlg.setCancelable(true);
+            progressDlg.setCanceledOnTouchOutside(false);
+//            progressDlg.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
             progressDlg.show();
         }
     }
@@ -129,7 +153,7 @@ public class DialogHelper {
         if (null == dialog) {
             if (null == context) return;
             View view = LayoutInflater.from(context).inflate(R.layout.layout_loading_dialog, null);
-            TextView loadingText = (TextView)view.findViewById(R.id.loading_tip_text);
+            TextView loadingText = (TextView) view.findViewById(R.id.loading_tip_text);
             loadingText.setText(msg);
 
             dialog = new Dialog(context, R.style.loading_dialog_style);

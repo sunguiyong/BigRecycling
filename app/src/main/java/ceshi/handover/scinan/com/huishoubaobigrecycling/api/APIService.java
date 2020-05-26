@@ -9,7 +9,9 @@ import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.Erweima;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.Face_Info;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.LunBo_Info;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.Lunbo;
+import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.LunboV;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.Response;
+import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.VersionApk;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.Version_Info;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.request_result;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.request_result_info;
@@ -41,8 +43,15 @@ public interface APIService {
     @GET("1.zip")
     Observable<ResponseBody> downloadApk();
 
+    @FormUrlEncoded
+    @POST("/api/android/versionNumber")
+    Observable<VersionApk> versionNumber(
+            @Field("groupId") String groupId
+    );
+
     /**
      * 下载
+     *
      * @param url
      * @return
      */
@@ -63,10 +72,18 @@ public interface APIService {
 
     @FormUrlEncoded
     @POST("api/ad/getAdList")
-    Observable<Lunbo> getOneLunBo(@Field("token") String token,
-                                  @Field("groupId") String groupId,
-                                  @Field("type") String type,
-                                  @Field("positions") String positions);
+    Observable<Lunbo> getOneLunBo(
+            @Field("groupId") String groupId,
+            @Field("type") String type,
+            @Field("positions") String positions);
+
+    @FormUrlEncoded
+    @POST("api/androidResource/getAdList")
+    Observable<LunboV> getAdList(
+            @Field("groupId") String deviceNumber,
+            @Field("zoneId") String zoneId
+    );
+
 
     @GET("index/get_scan")
     Observable<Erweima> getErweima();

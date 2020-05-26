@@ -8,13 +8,11 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import ceshi.handover.scinan.com.huishoubaobigrecycling.entity.SaveData;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.BaseApplication;
-import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.DialogHelper;
-import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.FileUtils;
 
 /**
  * 上报异常状态
@@ -25,8 +23,8 @@ public class DataFromServer {
 
     public static void postDataWarning(final int groupId, String deviceNumber, final int boxcode, final StatusCallBack statusCallBack) {
         StringRequest stringRequest = new StringRequest(Request.Method.POST,
-//                "https://weapp.iotccn.cn/garbageClassifyApi/api/cabin/receiveStateInfo",
-                "http://10.1.20.182:8882/garbageClassifyApi_war/api/cabin/receiveStateInfo",
+                "https://weapp.iotccn.cn/garbageClassifyApi/api/cabin/receiveStateInfo",
+//                "http://10.1.20.182:8882/garbageClassifyApi_war/api/cabin/receiveStateInfo",
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -48,10 +46,11 @@ public class DataFromServer {
             protected Map<String, String> getParams() throws AuthFailureError {
                 mapH.clear();
                 mapH.put("groupId", groupId + "");
-                mapH.put("deviceNumber", FileUtils.getFileContent(new File(FileUtils.filePath)));
+                mapH.put("deviceNumber", SaveData.deviceId);
                 mapH.put("categoryId1", "1");
                 if (boxcode == 1) {
                     mapH.put("state1", "2");
+                    mapH.put("alarmState1", "3");
                 } else {
                     mapH.put("state1", "");
                 }
@@ -59,6 +58,7 @@ public class DataFromServer {
                 mapH.put("categoryId2", "6");
                 if (boxcode == 2) {
                     mapH.put("state2", "2");
+                    mapH.put("alarmState2", "3");
                 } else {
                     mapH.put("state2", "");
                 }
@@ -66,6 +66,8 @@ public class DataFromServer {
                 mapH.put("categoryId3", "9");
                 if (boxcode == 3) {
                     mapH.put("state3", "2");
+                    mapH.put("alarmState3", "3");
+
                 } else {
                     mapH.put("state3", "");
                 }
@@ -73,6 +75,8 @@ public class DataFromServer {
                 mapH.put("categoryId4", "7");
                 if (boxcode == 4) {
                     mapH.put("state4", "2");
+                    mapH.put("alarmState4", "3");
+
                 } else {
                     mapH.put("state4", "");
                 }
@@ -80,6 +84,8 @@ public class DataFromServer {
                 mapH.put("categoryId5", "8");
                 if (boxcode == 5) {
                     mapH.put("state5", "2");
+                    mapH.put("alarmState5", "3");
+
                 } else {
                     mapH.put("state5", "");
                 }

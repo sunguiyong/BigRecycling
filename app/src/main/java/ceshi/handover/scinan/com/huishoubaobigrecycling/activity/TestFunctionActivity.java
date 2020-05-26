@@ -1,6 +1,7 @@
 package ceshi.handover.scinan.com.huishoubaobigrecycling.activity;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -45,8 +46,6 @@ public class TestFunctionActivity extends BaseActivity implements View.OnClickLi
     Button boliwenshidu;
     @BindView(R.id.ylopen)
     Button ylopen;
-    @BindView(R.id.ylclose)
-    Button ylclose;
     @BindView(R.id.ylhuishou)
     Button ylhuishou;
     @BindView(R.id.ylzhongliang)
@@ -95,6 +94,25 @@ public class TestFunctionActivity extends BaseActivity implements View.OnClickLi
     Button neidengclose;
     @BindView(R.id.result_tv)
     TextView resultTv;
+    @BindView(R.id.area_tv)
+    TextView areaTv;
+    @BindView(R.id.phone_tv)
+    TextView phoneTv;
+    @BindView(R.id.companyname_tv)
+    TextView companyTv;
+    @BindView(R.id.end_bt)
+    Button endBt;
+    SharedPreferences preferences;
+
+
+    @Override
+    public void initview(Bundle savedInstanceState) {
+        super.initview(savedInstanceState);
+        preferences = getSharedPreferences("info", MODE_PRIVATE);
+        companyTv.setText("公司：" + preferences.getString("group_name", ""));
+        phoneTv.setText("电话：" + preferences.getString("phone", ""));
+        areaTv.setText("地址：" + preferences.getString("address", ""));
+    }
 
     @Override
     public void onClick(View v) {
@@ -194,7 +212,7 @@ public class TestFunctionActivity extends BaseActivity implements View.OnClickLi
                 uploadCmdToPort(4, 102, 0, "纸张距离");
                 break;
             }
-            case R.id.zwenshidu:{
+            case R.id.zwenshidu: {
                 uploadCmdToPort(4, 301, 1, "纸张温湿度");
                 break;
             }
@@ -222,13 +240,19 @@ public class TestFunctionActivity extends BaseActivity implements View.OnClickLi
                 uploadCmdToPort(5, 103, 0, "衣物重量");
                 break;
             }
-            case R.id.ywwenshidu:{
+            case R.id.ywhuishou: {
+                uploadCmdToPort(5, 302, 1, "衣物回收");
+                break;
+            }
+            case R.id.ywwenshidu: {
                 uploadCmdToPort(5, 301, 1, "衣物温湿度");
                 break;
             }
-
+            case R.id.end_bt: {
+                finish();
+                break;
+            }
         }
-
     }
 
     @Override
@@ -259,6 +283,7 @@ public class TestFunctionActivity extends BaseActivity implements View.OnClickLi
             }
         });
         super.initListener();
+        endBt.setOnClickListener(this);
         suliaoopen.setOnClickListener(this);
         suliaoclose.setOnClickListener(this);
         suliaohuishou.setOnClickListener(this);
@@ -274,7 +299,6 @@ public class TestFunctionActivity extends BaseActivity implements View.OnClickLi
         boliwenshidu.setOnClickListener(this);
 
         ylopen.setOnClickListener(this);
-        ylclose.setOnClickListener(this);
         ylhuishou.setOnClickListener(this);
         ylzhongliang.setOnClickListener(this);
         yldistance.setOnClickListener(this);

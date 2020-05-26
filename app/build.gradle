@@ -9,7 +9,7 @@ android {
         versionCode 1
         versionName "1.0.5"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-        multiDexEnabled true
+//        multiDexEnabled true
 
         applicationId "ceshi.handover.scinan.com.huishoubaobigrecycling" //您应用的包名
         manifestPlaceholders = [
@@ -20,6 +20,10 @@ android {
             annotationProcessorOptions {
                 includeCompileClasspath true
             }
+        }
+
+        ndk {
+            abiFilters 'armeabi-v7a'  //需要什么样的架构就添加什么样的
         }
     }
 //    dexOptions {
@@ -38,6 +42,8 @@ android {
         abortOnError false
         disable 'InvalidPackage'
     }
+
+
 //    signingConfigs {
 //        release {
 //            // storeFile mystoreFile
@@ -66,18 +72,18 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    sourceSets.main {
-        jniLibs.srcDirs = ['libs']
+    sourceSets{
+        main{
+            jniLibs.srcDirs = ['libs']
+        }
+
     }
 }
 repositories {
     flatDir {
         dirs 'libs'
     }
-//    flatDir {
-//        //dirs 'libs','../模块名/libs'  
-//        dirs project(':SmartRecycling').file('libs'), 'libs'// 直接用模块的相对路径，这样是绝对准确的
-//    }
+
 }
 dependencies {
     //图片
@@ -120,7 +126,7 @@ dependencies {
     implementation 'com.trello:rxlifecycle:0.6.1'
     implementation 'com.trello:rxlifecycle-components:0.6.1'
     implementation 'com.github.bumptech.glide:glide:3.7.0'
-    compile project(path: ':zxinglib')
+    implementation project(path: ':zxinglib')
     // compile 'com.github.LuckSiege.PictureSelector:picture_library:v2.2.3'
     implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.30'
 }

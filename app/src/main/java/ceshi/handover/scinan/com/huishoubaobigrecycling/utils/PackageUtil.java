@@ -13,7 +13,7 @@ import android.text.TextUtils;
  * Created by hp on 2018/6/30.
  */
 
-public class PakageUtil {
+public class PackageUtil {
 
     public static String getAppVersion(Context mContext) {
         PackageInfo pi = null;

@@ -167,6 +167,7 @@ public class DataConvertUtilMy {
      */
 
     public static int bytesToIntLittleCopy1(byte[] src, int offset) {
+        //72 0E 00 4F CF 00 00 04 74 1F 00 00 1B 9D
         int value = 0x00 << 24 | (src[offset] & 255) << 16 | (src[offset + 1] & 255) << 8 | (src[offset + 2] & 255) << 0;
         return value;
     }

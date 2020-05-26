@@ -9,7 +9,9 @@ import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.DeviceState_Info;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.Erweima;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.LunBo_Info;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.Lunbo;
+import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.LunboV;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.Response;
+import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.VersionApk;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.Version_Info;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.request_result;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.request_result_info;
@@ -33,8 +35,20 @@ public class APIWrapper extends RetrofitUtil {
         return mAPIWrapper;
     }
 
-    public Observable<Lunbo> queryOneLunBO(String token,String groupId,String type,String positions) {
-        Observable<Lunbo> observable = getAPIService(2).getOneLunBo(token,groupId,type,positions);
+    public Observable<Lunbo> queryOneLunBO(String groupId, String type, String positions) {
+        Observable<Lunbo> observable = getAPIService(2).getOneLunBo(groupId, type, positions);
+        return observable;
+    }
+
+    public Observable<VersionApk> versionNumber(String groupId){
+        Observable<VersionApk> observable=getAPIService(2).versionNumber(groupId);
+        return observable;
+    }
+    /**
+     * @return
+     */
+    public Observable<LunboV> getAdList(String groupId, String zoneId) {
+        Observable<LunboV> observable = getAPIService(2).getAdList(groupId, zoneId);
         return observable;
     }
 

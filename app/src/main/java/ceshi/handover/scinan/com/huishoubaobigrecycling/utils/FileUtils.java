@@ -93,7 +93,7 @@ public class FileUtils {
         return content;
     }
 
-    public static String filePath = "/storage/sdcard0/Download" + "/config.txt";
+    public static String filePath = "/storage/sdcard0/smartrecovery" + "/config.txt";
 
     public static boolean checkFile() {
         File file = new File(filePath);
