@@ -39,7 +39,7 @@ public class CyclerViewPager extends ViewPager {
         MyAdapter myAdapter = new MyAdapter(adapter);
         setOnPageChangeListener(null); //手动增加一个监听
         super.setAdapter(myAdapter);
-        setCurrentItem(1);
+        setCurrentItem(0);
         //开启自动轮播
         startScroll();//自动轮播
     }
@@ -68,6 +68,7 @@ public class CyclerViewPager extends ViewPager {
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             int currentItem = getCurrentItem();
+            Log.d("hahaha", "谁谁当前item: "+getCurrentItem());
             int time = 0;
             if (SaveData.timeList != null) {
                 if (currentItem - SaveData.timeList.size() == 0) {
@@ -120,7 +121,6 @@ public class CyclerViewPager extends ViewPager {
         }
 
         /**
-         *
          * @param state
          */
         @Override
@@ -162,6 +162,8 @@ public class CyclerViewPager extends ViewPager {
             } else {
                 position -= 1; //计算新的索引
             }
+
+//            Log.d("hahahaha", "谁谁谁: " + position);
             return adapter.instantiateItem(container, position);
         }
 

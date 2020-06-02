@@ -15,4 +15,5 @@ public class SaveData {
     public static String deviceCheckId;
     public static boolean binUpdate;
 
+    public static int userId;
 }

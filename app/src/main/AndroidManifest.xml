@@ -46,12 +46,29 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme.NoActionBar"
         tools:ignore="GoogleAppIndexingWarning">
+
+        <receiver
+            android:name=".receiver.InstallReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.PACKAGE_REPLACED" />
+
+                <data android:scheme="package" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".receiver.MyAlarmReceiver"
+            android:enabled="true"
+            android:exported="true" />
+
         <service
             android:name=".service.StartOrShutdownService"
-            android:exported="true"></service>
+            android:exported="true" />
         <service
             android:name=".service.MyIntentService"
-            android:exported="true" android:enabled="true"/>
+            android:enabled="true"
+            android:exported="true" />
 
         <activity android:name=".activity.TestFunctionActivity" />
         <activity
@@ -68,24 +85,24 @@
             </intent-filter>
         </activity>
         <activity android:name=".activity.ADActivity" />
-        <activity
-            android:name=".activity.BalanceActivity"
-            android:launchMode="singleTop" /> <!-- For test only 测试高级功能 -->
+        <!--        <activity-->
+        <!--            android:name=".activity.BalanceActivity"-->
+        <!--            android:launchMode="singleTop" /> &lt;!&ndash; For test only 测试高级功能 &ndash;&gt;-->
         <activity
             android:name=".activity.RecoverActivity"
             android:launchMode="singleTop" /> <!-- 息屏receiver -->
-        <receiver
-            android:name=".receiver.ScreenOffAdminReceiver"
-            android:label="@string/app_name"
-            android:permission="android.permission.BIND_DEVICE_ADMIN">
-            <meta-data
-                android:name="android.app.device_admin"
-                android:resource="@xml/device_admin" />
+        <!--        <receiver-->
+        <!--            android:name=".receiver.ScreenOffAdminReceiver"-->
+        <!--            android:label="@string/app_name"-->
+        <!--            android:permission="android.permission.BIND_DEVICE_ADMIN">-->
+        <!--            <meta-data-->
+        <!--                android:name="android.app.device_admin"-->
+        <!--                android:resource="@xml/device_admin" />-->
 
-            <intent-filter>
-                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
-            </intent-filter>
-        </receiver>
+        <!--            <intent-filter>-->
+        <!--                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />-->
+        <!--            </intent-filter>-->
+        <!--        </receiver>-->
         <receiver
             android:name=".activity.BootBroadcastReceiver"
             android:enabled="true"
@@ -106,7 +123,8 @@
         <activity
             android:name="cn.jpush.android.ui.PopWinActivity"
             android:exported="false"
-            android:theme="@style/MyDialogStyle" /> <!-- Required SDK核心功能 -->
+            android:theme="@style/MyDialogStyle" />
+        <!-- Required SDK核心功能 -->
         <activity
             android:name="cn.jpush.android.ui.PushActivity"
             android:configChanges="orientation|keyboardHidden"
@@ -119,11 +137,11 @@
                 <category android:name="${applicationId}" />
             </intent-filter>
         </activity> <!-- Required SDK 核心功能 -->
-        <!-- 可配置 android:process 参数将 PushService 放在其他进程中 -->
+        <!-- 可配置 android:process 参数将 PushService 放在其他进程中 android:enabled="true"-->
         <service
             android:name="cn.jpush.android.service.PushService"
-            android:enabled="true"
-            android:exported="false">
+            android:exported="false"
+            android:process=":pushcore">
             <intent-filter>
                 <action android:name="cn.jpush.android.intent.REGISTER" />
                 <action android:name="cn.jpush.android.intent.REPORT" />
@@ -135,7 +153,8 @@
             android:name="cn.jpush.android.service.DataProvider"
             android:authorities="${applicationId}.DataProvider"
             android:exported="false"
-            android:process=":pushcore" /> <!-- since 1.8.0 option 可选项。用于同一设备中不同应用的JPush服务相互拉起的功能。 -->
+            android:process=":pushcore" />
+        <!-- since 1.8.0 option 可选项。用于同一设备中不同应用的JPush服务相互拉起的功能。 -->
         <!-- 若不启用该功能可删除该组件，将不拉起其他应用也不能被其他应用拉起 -->
         <service
             android:name="cn.jpush.android.service.DaemonService"
@@ -146,11 +165,13 @@
 
                 <category android:name="${applicationId}" />
             </intent-filter>
-        </service> <!-- since 3.1.0 Required SDK 核心功能 -->
+        </service>
+        <!-- since 3.1.0 Required SDK 核心功能 -->
         <provider
             android:name="cn.jpush.android.service.DownloadProvider"
             android:authorities="${applicationId}.DownloadProvider"
-            android:exported="true" /> <!-- Required SDK核心功能 -->
+            android:exported="true" />
+        <!-- Required SDK核心功能 -->
         <receiver
             android:name="cn.jpush.android.service.PushReceiver"
             android:enabled="true"
@@ -170,10 +191,12 @@
 
                 <data android:scheme="package" />
             </intent-filter>
-        </receiver> <!-- Required SDK核心功能 -->
+        </receiver>
+        <!-- Required SDK核心功能 -->
         <receiver
             android:name="cn.jpush.android.service.AlarmReceiver"
-            android:exported="false" /> <!-- User defined.  For test only  用户自定义的广播接收器 -->
+            android:exported="false" />
+        <!-- User defined.  For test only  用户自定义的广播接收器 -->
         <receiver
             android:name=".push.MyReceiver"
             android:enabled="true"
@@ -186,7 +209,8 @@
                 <action android:name="cn.jpush.android.intent.CONNECTION" /> <!-- 接收网络变化 连接/断开 since 1.6.3 -->
                 <category android:name="${applicationId}" />
             </intent-filter>
-        </receiver> <!-- User defined.  For test only  用户自定义接收消息器,3.0.7开始支持,目前新tag/alias接口设置结果会在该广播接收器对应的方法中回调 -->
+        </receiver>
+        <!-- User defined.  For test only  用户自定义接收消息器,3.0.7开始支持,目前新tag/alias接口设置结果会在该广播接收器对应的方法中回调 -->
         <!-- since 3.3.0 接收JPush相关事件 -->
         <receiver android:name=".push.PushMessageReceiver">
             <intent-filter>
@@ -205,18 +229,18 @@
 
                 <category android:name="${applicationId}" />
             </intent-filter>
-        </activity> <!-- since 3.3.0 Required SDK 核心功能 -->
+        </activity>
+        <!-- since 3.3.0 Required SDK 核心功能 -->
         <!-- 可配置android:process参数将PushService放在其他进程中 -->
         <!-- User defined.  For test only 继承自cn.jpush.android.service.JCommonService -->
         <service
             android:name=".push.MyJpushService"
-            android:enabled="true"
-            android:exported="false"
             android:process=":pushcore">
             <intent-filter>
                 <action android:name="cn.jiguang.user.service.action" />
             </intent-filter>
-        </service> <!-- Required  . Enable it you can get statistics data with channel -->
+        </service>
+        <!-- Required  . Enable it you can get statistics data with channel -->
         <meta-data
             android:name="JPUSH_CHANNEL"
             android:value="default_developer" />
@@ -224,15 +248,15 @@
             android:name="JPUSH_APPKEY"
             android:value="1a862bfbbdc61969336ba14f" />
 
-        <provider
-            android:name="android.support.v4.content.FileProvider"
-            android:authorities="ceshi.handover.scinan.com.huishoubaobigrecycling.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
-        </provider>
+        <!--        <provider-->
+        <!--            android:name="android.support.v4.content.FileProvider"-->
+        <!--            android:authorities="ceshi.handover.scinan.com.huishoubaobigrecycling.fileprovider"-->
+        <!--            android:exported="false"-->
+        <!--            android:grantUriPermissions="true">-->
+        <!--            <meta-data-->
+        <!--                android:name="android.support.FILE_PROVIDER_PATHS"-->
+        <!--                android:resource="@xml/file_paths" />-->
+        <!--        </provider>-->
     </application>
 
 </manifest>

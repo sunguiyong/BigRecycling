@@ -59,6 +59,24 @@ public class LunboV {
     }
 
     public static class DataBean {
+        @Override
+        public String toString() {
+            return "DataBean{" +
+                    "id=" + id +
+                    ", name='" + name + '\'' +
+                    ", state=" + state +
+                    ", groupId=" + groupId +
+                    ", startDate=" + startDate +
+                    ", endDate=" + endDate +
+                    ", playStartTime='" + playStartTime + '\'' +
+                    ", playEndTime='" + playEndTime + '\'' +
+                    ", playType=" + playType +
+                    ", createTime=" + createTime +
+                    ", isDelete=" + isDelete +
+                    ", list=" + list +
+                    '}';
+        }
+
         /**
          * id : 27
          * name : 测试

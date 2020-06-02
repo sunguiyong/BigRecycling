@@ -6,8 +6,10 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.Window;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -95,6 +97,7 @@ public class DialogHelper {
         if (null == progressDlg) {
             if (ctx == null) return;
             progressDlg = new ProgressDialog(ctx);
+
             //设置进度条样式
             progressDlg.setProgressStyle(ProgressDialog.STYLE_SPINNER);
 //            progressDlg.getWindow().setTitle(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);

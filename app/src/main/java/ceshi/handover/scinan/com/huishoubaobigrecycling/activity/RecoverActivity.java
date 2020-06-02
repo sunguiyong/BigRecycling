@@ -233,7 +233,7 @@ public class RecoverActivity extends BaseActivity {
 
         preferences = getSharedPreferences("info", MODE_PRIVATE);
         companyTv.setText("公司：" + preferences.getString("group_name", ""));
-        phoneTv.setText("电话：" + preferences.getString("phone", ""));
+//        phoneTv.setText("电话：" + preferences.getString("phone", ""));
         areaTv.setText("地址：" + preferences.getString("address", ""));
     }
 
@@ -442,6 +442,7 @@ public class RecoverActivity extends BaseActivity {
     private boolean isChildren = true;
 
     private void getBoxWeight() {
+        DialogHelper.showProgressDlg1(RecoverActivity.this, "请稍后...");
         flag = 0;
         //称重指令
         uploadCmdToPort(2, 103, 0, "塑料称重");
@@ -452,6 +453,8 @@ public class RecoverActivity extends BaseActivity {
         SystemClock.sleep(300);
         uploadCmdToPort(5, 103, 0, "衣物重量");
         SystemClock.sleep(300);
+        DialogHelper.stopProgressDlg();
+
     }
 
     private boolean sendData2Board() {

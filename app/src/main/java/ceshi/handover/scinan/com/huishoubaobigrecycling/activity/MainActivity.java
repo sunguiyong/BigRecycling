@@ -25,6 +25,7 @@ import android.os.Message;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
+import android.support.constraint.ConstraintLayout;
 import android.support.v4.content.FileProvider;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.PagerAdapter;
@@ -42,7 +43,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.VideoView;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
@@ -62,10 +62,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
+import butterknife.ButterKnife;
 import butterknife.OnClick;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.R;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.activity.getdata.DataFromServer;
@@ -84,6 +84,8 @@ import ceshi.handover.scinan.com.huishoubaobigrecycling.bean.VersionApk;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.control.ControlManagerImplMy;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.entity.SaveData;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.mybean.QRCode;
+import ceshi.handover.scinan.com.huishoubaobigrecycling.receiver.InstallReceiver;
+import ceshi.handover.scinan.com.huishoubaobigrecycling.receiver.MyAlarmReceiver;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.receiver.ScreenOffAdminReceiver;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.BaseApplication;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.Constant;
@@ -92,6 +94,7 @@ import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.DialogHelper;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.FileUtils;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.KeyBoardUtil;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.PackageUtil;
+import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.SlientInstall;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.download.DownloadUtils;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.download.JsDownloadListener;
 import ceshi.handover.scinan.com.huishoubaobigrecycling.view.CyclerViewPager;
@@ -104,6 +107,7 @@ import rx.schedulers.Schedulers;
 
 public class MainActivity extends BaseActivity {
     int x = R.layout.activity_main;
+
     @BindView(R.id.appversion_tv)
     TextView appversionTv;
     @BindView(R.id.viewpager_head)
@@ -131,7 +135,6 @@ public class MainActivity extends BaseActivity {
     static Gson gson = new Gson();
     List<LunboV.DataBean.ListBean> message;
     List<LunboV.DataBean.ListBean> message_one;
-
     boolean sRecyclingIsOpen = false;
     public static boolean isShow = false;
 
@@ -140,6 +143,9 @@ public class MainActivity extends BaseActivity {
     final static long DURATION = 1000;// 规定有效时间
     long[] mHits = new long[COUNTS];
     boolean icCardIsOpen = false;
+    @BindView(R.id.refreshcode)
+    TextView refreshcode;
+
     private boolean icCheck = false;
 
     private Map<String, String> mapQRCode = new HashMap<>();
@@ -181,6 +187,7 @@ public class MainActivity extends BaseActivity {
                         qrCode = gson.fromJson(response, QRCode.class);
                         if (qrCode.getStatus() == 200) {
                             Glide.with(getApplicationContext()).load(qrCode.getData()).into(erweima);
+                            DialogHelper.stopProgressDlg();
                         }
                         Log.d("imageResponse", response);
                     }
@@ -219,6 +226,7 @@ public class MainActivity extends BaseActivity {
                             icCheck = false;
                             LoginResult loginResult;
                             loginResult = gson.fromJson(response, LoginResult.class);
+                            SaveData.userId = loginResult.getData().getUser().getId();
                             for (int i = 0; i < loginResult.getData().getUser().getCategory().size(); i++) {
                                 String name = loginResult.getData().getUser().getCategory().get(i).getName();
                                 if (name.equals("塑料瓶")) {
@@ -280,6 +288,7 @@ public class MainActivity extends BaseActivity {
                         if (response.contains("\"status\":200")) {
                             LoginResult loginResult = new LoginResult();
                             loginResult = gson.fromJson(response, LoginResult.class);
+                            SaveData.userId = loginResult.getData().getUser().getId();
                             for (int i = 0; i < loginResult.getData().getUser().getCategory().size(); i++) {
                                 String name = loginResult.getData().getUser().getCategory().get(i).getName();
                                 if (name.equals("塑料瓶")) {
@@ -329,6 +338,25 @@ public class MainActivity extends BaseActivity {
     @Override
     public void initview(Bundle savedInstanceState) {
         super.initview(savedInstanceState);
+
+        erweima.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                checkVersionApk("huishou.apk");
+            }
+        });
+        //注册广播
+        MyAlarmReceiver myAlarmReceiver = new MyAlarmReceiver();
+        IntentFilter filter = new IntentFilter();
+
+        refreshcode.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                DialogHelper.showProgressDlg1(MainActivity.this, "请稍等...");
+                getQRCode(deviceId);
+            }
+        });
+
         //息屏相关
         adminReceiver = new ComponentName(MainActivity.this, ScreenOffAdminReceiver.class);
         mPowerManager = (PowerManager) getSystemService(POWER_SERVICE);
@@ -382,7 +410,7 @@ public class MainActivity extends BaseActivity {
         registerMessageReceiver();
         doFile();
         companyTv.setText("公司：" + preferences.getString("group_name", ""));
-        phoneTv.setText("电话：" + preferences.getString("phone", ""));
+//        phoneTv.setText("电话：" + preferences.getString("phone", ""));
         areaTv.setText("地址：" + preferences.getString("address", ""));
 
         keyBoardUtil = new KeyBoardUtil(keyboardKv, phonenumet);
@@ -405,8 +433,8 @@ public class MainActivity extends BaseActivity {
         });
         mCurrentPositions = new HashMap<Integer, Integer>();
 
-        //获取轮播图
-        getLunbo();
+//        //获取轮播图
+//        getLunbo();
     }
 
     static Map<Integer, Integer> mCurrentPositions;
@@ -415,8 +443,9 @@ public class MainActivity extends BaseActivity {
      * 获取轮播图
      */
     private void getLunbo() {
-//        LunBO(message, new MyPagerAdapter(message), viewpagerHead);
-//        LunBO(message_one, new MyPagerAdapter(message_one), viewpagerFoot);
+        //获取轮播图
+        LunBO(message, new MyPagerAdapter(message), viewpagerHead);
+        LunBO(message_one, new MyPagerAdapter(message_one), viewpagerFoot);
     }
 
     public CountDownTimer countDownTimer;
@@ -441,7 +470,7 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-//        getLunbo();
+        getLunbo();
 //        phonenumet.setText("");
         keyboardKv.setVisibility(View.VISIBLE);
         keyboardCheck = true;
@@ -481,14 +510,14 @@ public class MainActivity extends BaseActivity {
     }
 
     //自动更新轮播图
-    public class UpdateUIBroadcastReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Intent intent_recover = new Intent(MainActivity.this, RecoverActivity.class);
-            startActivity(intent_recover);
-            finish();
-        }
-    }
+//    public class UpdateUIBroadcastReceiver extends BroadcastReceiver {
+//        @Override
+//        public void onReceive(Context context, Intent intent) {
+//            Intent intent_recover = new Intent(MainActivity.this, RecoverActivity.class);
+//            startActivity(intent_recover);
+//            finish();
+//        }
+//    }
 
     @Override
     public void initData() {
@@ -505,12 +534,14 @@ public class MainActivity extends BaseActivity {
                     @Override
                     public void _onNext(LunboV lunboV) {
                         if (lunboV.getStatus() == 200) {
-                            Log.d(TAG, "_onNext: " + lunboV.toString());
                             SaveData.timeList.clear();
                             for (int i = 0; i < lunboV.getData().get(0).getList().size(); i++) {
                                 list.add(lunboV.getData().get(0).getList().get(i));
                                 SaveData.timeList.add(lunboV.getData().get(0).getList().get(i).getPlayTime());
                             }
+//                            for (int j = 0; j < SaveData.timeList.size(); j++) {
+//                                Log.d(TAG, "时间的size: " + SaveData.timeList.get(j));
+//                            }
                             viewPager1.setAdapter(adapter);
                         }
                     }
@@ -595,6 +626,8 @@ public class MainActivity extends BaseActivity {
 
             if (path.contains("mp4")) {
                 container.addView(videoView);
+
+
                 videoView.setVideoURI(Uri.parse(path));
                 Log.d(TAG, "instantiateItem: " + "视频");
                 videoView.start();
@@ -642,6 +675,7 @@ public class MainActivity extends BaseActivity {
         IntentFilter filter = new IntentFilter();
         filter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);
         filter.addAction(MESSAGE_RECEIVED_ACTION);
+
         LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(messageReceiver, filter);
     }
 
@@ -650,7 +684,6 @@ public class MainActivity extends BaseActivity {
      * 极光接收消息处理
      */
     public class MessageReceiver extends BroadcastReceiver {
-
         @Override
         public void onReceive(Context context, Intent intent) {
             try {
@@ -665,7 +698,7 @@ public class MainActivity extends BaseActivity {
                         LoginQRCode loginQRCode;
                         loginQRCode = gson.fromJson(msgContent, LoginQRCode.class);
                         ResultBean.token = loginQRCode.getData().getUser().getToken();
-
+                        SaveData.userId = loginQRCode.getData().getUser().getId();
                         for (int i = 0; i < loginQRCode.getData().getUser().getCategory().size(); i++) {
                             String name = loginQRCode.getData().getUser().getCategory().get(i).getName();
                             if (name.equals("塑料瓶")) {
@@ -698,11 +731,11 @@ public class MainActivity extends BaseActivity {
                     } else if (msgType.equals("004") && isShow) {//请求轮播图更新
                         getLunbo();
                     } else if (msgType.equals("005") && isShow && msgContent.equals(deviceId.trim())) {//apk更新
-                        DialogHelper.showProgressDlg1(getApplicationContext(), "APP更新中...");
+                        DialogHelper.showProgressDlg1(MainActivity.this, "APP更新中...");
                         checkVersionApk("huishou.apk");
                     } else if (msgType.equals("006") && isShow && msgContent.equals(deviceId.trim())) {//bin文件更新 固件更新
                         // TODO: 2019/12/30 校验版本
-                        DialogHelper.showProgressDlg1(getApplicationContext(), "固件更新中...");
+                        DialogHelper.showProgressDlg1(MainActivity.this, "固件更新中...");
                         SaveData.binUpdate = true;
                         new Handler().postDelayed(new Runnable() {
                             @Override
@@ -712,7 +745,6 @@ public class MainActivity extends BaseActivity {
                         }, 1000);
 
                     } else if (msgType.equals("007")) {//设备首次获取公司信息
-                        shutdownOrstart();
                         final CompanyInfo companyInfo;
                         companyInfo = gson.fromJson(msgContent, CompanyInfo.class);
                         Log.d("companyInfo", "onReceive: " + msgType + msgContent);
@@ -722,22 +754,28 @@ public class MainActivity extends BaseActivity {
                                 public void run() {
                                     SharedPreferences.Editor editor = getSharedPreferences("info", MODE_PRIVATE).edit();
                                     editor.putString("address", companyInfo.getAddress());
-                                    editor.putString("phone", companyInfo.getPhone());
+//                                    editor.putString("phone", companyInfo.getPhone());
                                     editor.putString("group_name", companyInfo.getGroup_name());
                                     editor.putString("group_id", companyInfo.getGroup_id() + "");
                                     //todo
                                     editor.putString("zone_id", companyInfo.getZone_id() + "");
+                                    editor.putInt(companyInfo.getCabinList().get(0).getCategory_id() + "", companyInfo.getCabinList().get(0).getId());
+                                    editor.putInt(companyInfo.getCabinList().get(1).getCategory_id() + "", companyInfo.getCabinList().get(1).getId());
+                                    editor.putInt(companyInfo.getCabinList().get(2).getCategory_id() + "", companyInfo.getCabinList().get(2).getId());
+                                    editor.putInt(companyInfo.getCabinList().get(3).getCategory_id() + "", companyInfo.getCabinList().get(3).getId());
+                                    editor.putInt(companyInfo.getCabinList().get(4).getCategory_id() + "", companyInfo.getCabinList().get(4).getId());
                                     editor.apply();
                                     areaTv.setText(companyInfo.getAddress());
-                                    phoneTv.setText(companyInfo.getPhone());
+//                                    phoneTv.setText(companyInfo.getPhone());
                                     companyTv.setText(companyInfo.getGroup_name());
                                 }
                             });
                         }
 
-                    }
-                    if (msgType.equals("008")) {
-                        Runtime.getRuntime().exec("input keyevent 26");
+                    } else if (msgType.equals("008")) {//待机息屏
+                        Runtime.getRuntime().exec("su -c input keyevent 26");
+                    } else if (msgType.equals("009")) {//定时开关机
+
                     }
                     Log.d("myJpush success", messge);
                 }
@@ -951,9 +989,7 @@ public class MainActivity extends BaseActivity {
             int uiOptions = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                     | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | View.SYSTEM_UI_FLAG_FULLSCREEN;
             decorView.setSystemUiVisibility(uiOptions);
-
 //            CloseBarUtil.closeBar();
-
         }
     }
 
@@ -980,12 +1016,15 @@ public class MainActivity extends BaseActivity {
     private String testUrl = "version/downLoadFile?path=C:/energySystem/tomcat-8084/webapps/garbageClassifyManageSystem/resources/testupload/";
     private String baseUrl = "http://114.116.37.87:8084/garbageClassifyManageSystem/";
 
+    private String baseUrlApk = "http://114.116.37.87:8084/resources/";
+    private String apkUrl = "apk/";
+
     /**
      * 下载apk或bin文件
      * /storage/sdcard0/Download/STM32L073_RTT_Example.bin
      */
     private void checkVersionApk(final String name) {
-        DownloadUtils downloadUtils = new DownloadUtils(baseUrl, new JsDownloadListener() {
+        DownloadUtils downloadUtils = new DownloadUtils(baseUrlApk, new JsDownloadListener() {
             @Override
             public void onStartDownload(long length) {
                 Log.d("onStartDownload", "onStartDownload: ");
@@ -1001,12 +1040,12 @@ public class MainActivity extends BaseActivity {
 
             }
         });
-        downloadUtils.download(testUrl + name, new File("/storage/sdcard0/Download", name), new Subscriber() {
+        downloadUtils.download(apkUrl + name, new File("/storage/sdcard0/Download", name), new Subscriber() {
             @Override
             public void onCompleted() {
                 if (name.equals("huishou.apk")) {
                     downSuccess();
-                } else {
+                } else if (name.equals("STM32L073_RTT_Example.bin")) {
                     for (int i = 1; i <= 5; i++) {
                         SaveData.binUpdate = true;
                         uploadCmdToPort(i, 999, 1, "更新固件");
@@ -1015,7 +1054,7 @@ public class MainActivity extends BaseActivity {
                     }
                     DialogHelper.stopProgressDlg();
                 }
-                Toast.makeText(getApplicationContext(), "下载成功", Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, "下载成功", Toast.LENGTH_LONG).show();
             }
 
             @Override
@@ -1047,29 +1086,30 @@ public class MainActivity extends BaseActivity {
         if (progressDialog != null && progressDialog.isShowing()) {
             progressDialog.dismiss();
         }
-        android.support.v7.app.AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-        builder.setIcon(android.R.drawable.ic_dialog_info);
-        builder.setTitle("下载完成");
-        builder.setMessage("请点击安装");
-        builder.setCancelable(false);
-        builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                Intent intent = new Intent(Intent.ACTION_VIEW);
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) { //android N的权限问题
-                    intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);//授权读权限
-                    Uri contentUri = FileProvider.getUriForFile(MainActivity.this, "ceshi.handover.scinan.com.huishoubaobigrecycling.fileprovider",
-                            new File("/storage/sdcard0/Download", "huishou.apk"));//注意修改
-                    intent.setDataAndType(contentUri, "application/vnd.android.package-archive");
-                } else {
-                    intent.setDataAndType(Uri.fromFile(new File("/storage/sdcard0/Download", "huishou.apk")), "application/vnd.android.package-archive");
-                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                }
-                startActivity(intent);
-            }
-        });
-        builder.create().show();
+        SlientInstall.install("/storage/sdcard0/Download/huishou.apk");
+//        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+//        builder.setIcon(android.R.drawable.ic_dialog_info);
+//        builder.setTitle("下载完成");
+//        builder.setMessage("请点击安装");
+//        builder.setCancelable(false);
+//        builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialog, int which) {
+//                Intent intent = new Intent(Intent.ACTION_VIEW);
+//
+//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) { //android N的权限问题
+//                    intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);//授权读权限
+//                    Uri contentUri = FileProvider.getUriForFile(MainActivity.this, "ceshi.handover.scinan.com.huishoubaobigrecycling.fileprovider",
+//                            new File("/storage/sdcard0/Download", "huishou.apk"));//注意修改
+//                    intent.setDataAndType(contentUri, "application/vnd.android.package-archive");
+//                } else {
+//                    intent.setDataAndType(Uri.fromFile(new File("/storage/sdcard0/Download", "huishou.apk")), "application/vnd.android.package-archive");
+//                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//                }
+//                startActivity(intent);
+//            }
+//        });
+//        builder.create().show();
     }
 
     /**
@@ -1122,8 +1162,10 @@ public class MainActivity extends BaseActivity {
     /**
      * 自动开关机
      */
-    private void shutdownOrstart() {
+    private void shutdownOrStart() {
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-
+        Intent intent = new Intent(this, MyAlarmReceiver.class).setAction("MyAlarmAction");
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, 1000 * 60, AlarmManager.INTERVAL_DAY, pendingIntent);
     }
 }

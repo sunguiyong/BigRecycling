@@ -115,6 +115,12 @@ public class TestFunctionActivity extends BaseActivity implements View.OnClickLi
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        RoleChooseActivity.instance.finish();
+    }
+
+    @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.ylopen: {

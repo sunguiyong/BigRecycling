@@ -29,14 +29,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="@dimen/dp_10"
-                android:text="欢迎"
+                android:text="保护环境，变废为宝！"
                 android:textColor="#000000" />
 
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="@dimen/dp_8"
-                android:src="@mipmap/touxiang" />
+                android:src="@mipmap/touxiang"
+                android:visibility="invisible" />
 
             <TextView
                 android:id="@+id/username"
@@ -91,7 +92,8 @@
                 android:layout_height="40dp"
                 android:layout_gravity="center"
                 android:background="@mipmap/right"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:visibility="invisible">
 
                 <ImageView
                     android:layout_width="wrap_content"
@@ -335,11 +337,11 @@
 
     <Button
         android:id="@+id/over_bt"
-        android:textStyle="bold"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:layout_marginTop="200dp"
         android:text="回收结束"
-        android:textSize="20sp" />
+        android:textSize="20sp"
+        android:textStyle="bold" />
 </LinearLayout>

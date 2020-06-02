@@ -1,9 +1,6 @@
 package ceshi.handover.scinan.com.huishoubaobigrecycling.base;
 
 
-
-
-
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.RequiresApi;
@@ -19,74 +16,83 @@ import ceshi.handover.scinan.com.huishoubaobigrecycling.utils.BaseApplication;
 
 public abstract class BaseActivity extends RxAppCompatActivity {
 
-	Unbinder unbinder;
-	private long exitTime;
-	@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
-		init();
-		super.onCreate(savedInstanceState);
-		setContentView(layoutView());
-		ImmersionBar.with(this).init();
-	    unbinder=ButterKnife.bind(this);
+    Unbinder unbinder;
+    private long exitTime;
+
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        // TODO Auto-generated method stub
+        init();
+        super.onCreate(savedInstanceState);
+        setContentView(layoutView());
+        ImmersionBar.with(this).init();
+        unbinder = ButterKnife.bind(this);
 		/*ImmersionBar.with(this)
 				.statusBarColor(R.color.with).statusBarDarkFont(true).flymeOSStatusBarFontColor(R.color.with).init();*/
-		initview(savedInstanceState);
-		initData();
-		initListener();
-	}
+        initview(savedInstanceState);
+        initData();
+        initListener();
+    }
 
-	public void init() {
-	}
+    public void init() {
+    }
 
-	/**
-	 *初始化监听
-	 * @return
-	 */
-	public void initListener() {
-		// TODO Auto-generated method stub
+    /**
+     * 初始化监听
+     *
+     * @return
+     */
+    public void initListener() {
+        // TODO Auto-generated method stub
 
-	}
-	/**
-	 * 数据的加载
-	 * @return
-	 */
-	public void initData() {
-		// TODO Auto-generated method stub
-		
-	}
-	/**
-	 * 初始化数据
-	 * @return
-	 */
-	public void initview(Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
-		//StatusBarCompat.compat(this, Color.parseColor("#055A86"));
+    }
 
-	}
-/**
- * ENEVBUS加载布局的方法
- * @return
- */
+    /**
+     * 数据的加载
+     *
+     * @return
+     */
+    public void initData() {
+        // TODO Auto-generated method stub
 
-	public abstract int layoutView();
-	/*@Subscribe(threadMode = ThreadMode.MAIN)
-	public void onEventMainThread(PrintMsgEvent event) {
-		if (event.type == PrinterMsgType.MESSAGE_TOAST) {
-			ToastUtil.showToast(BaseActivity.this,event.msg);
-		}
-	}*/
-	@Override
-	public void onDestroy() {
-		//将activity从堆栈中移除
-		BaseApplication.getInstance().getRequestQueue().cancelAll("VolleyRequest");
+    }
 
-		super.onDestroy();
+    /**
+     * 初始化数据
+     *
+     * @return
+     */
+    public void initview(Bundle savedInstanceState) {
+        // TODO Auto-generated method stub
+        //StatusBarCompat.compat(this, Color.parseColor("#055A86"));
 
-		unbinder.unbind();
-		ImmersionBar.with(this).destroy();
-	}
+    }
+
+    /**
+     * ENEVBUS加载布局的方法
+     *
+     * @return
+     */
+
+    public abstract int layoutView();
+
+    /*@Subscribe(threadMode = ThreadMode.MAIN)
+    public void onEventMainThread(PrintMsgEvent event) {
+        if (event.type == PrinterMsgType.MESSAGE_TOAST) {
+            ToastUtil.showToast(BaseActivity.this,event.msg);
+        }
+    }*/
+    @Override
+    public void onDestroy() {
+        //将activity从堆栈中移除
+//        BaseApplication.getInstance().getRequestQueue().cancelAll("VolleyRequest");
+        BaseApplication.getHttpQueues().cancelAll("VolleyRequest");
+        super.onDestroy();
+
+        unbinder.unbind();
+        ImmersionBar.with(this).destroy();
+    }
 
 
 

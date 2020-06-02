@@ -15,6 +15,7 @@ import com.android.volley.toolbox.HttpStack;
 import com.android.volley.toolbox.Volley;
 
 import cn.jpush.android.api.JPushInterface;
+import xcrash.XCrash;
 
 
 public class BaseApplication extends Application {
@@ -22,18 +23,21 @@ public class BaseApplication extends Application {
     public static BaseApplication instance;
     public static RequestQueue queues;
     private RequestQueue mRequestQueue = null;
-
-    public static RequestQueue getHttpQueues() {
-        return queues;
-    }
+    public static RequestQueue requestQueue;
 
     @Override
     public void onCreate() {
         super.onCreate();
         instance = this;
-//        JPushInterface.init(this);
+        JPushInterface.init(this);
 //        JPushInterface.setDebugMode(true);    // 设置开启日志,发布时请关闭日志
-        queues = Volley.newRequestQueue(getApplicationContext(), (HttpStack) null);
+        queues = Volley.newRequestQueue(getApplicationContext());
+
+        requestQueue = RequestQueneUtil.getRequestQueue(this);
+    }
+
+    public static RequestQueue getHttpQueues() {
+        return queues;
     }
 
     public RequestQueue getRequestQueue() {
@@ -44,14 +48,12 @@ public class BaseApplication extends Application {
     }
 
     public static BaseApplication getInstance() {
-
         return instance;
     }
 
-
-//    @Override
-//    protected void attachBaseContext(Context base) {
-//        super.attachBaseContext(base);
-//        MultiDex.install(this);
-//    }
+    @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(base);
+        XCrash.init(this);
+    }
 }
